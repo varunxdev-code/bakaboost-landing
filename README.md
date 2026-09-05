@@ -18,3 +18,5 @@ python -m http.server
 - Creator dashboard and supporter account (sample data in memory)
 
 Reload resets sample state. Fees and creators are demo data.
+
+Enable GitHub Pages in the repo Settings (Deploy from branch: `main` / root) to host the site.
