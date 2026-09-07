@@ -592,7 +592,6 @@ function creatorHeader(c, opts = {}) {
   </div>`;
 }
 function coffeeCard(c) {
-  if (c.handle === state.user.handle && state.role === "creator") return "";
   return `<div class="coffee-card">
     <div class="ic">${I.cup}</div>
     <b>Buy ${esc(c.name.split(" ")[0])} a coffee</b>
