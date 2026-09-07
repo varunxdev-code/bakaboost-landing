@@ -547,13 +547,15 @@ function pageExplore(inApp) {
 /* ---------- Creator profile ---------- */
 function wishCard(c, w) {
   const raised = w.raised || 0, pct = Math.min(100, Math.round((raised / w.price) * 100));
+  const pool = c.gallery || [IMG.hero, IMG.post1, c.avatar];
+  const img = pool[Math.abs([...w.id].reduce((a, ch) => a + ch.charCodeAt(0), 0)) % pool.length];
   return `<div class="wish ${w.done ? "done" : ""}">
-    <div class="thumb" style="${thumbStyle(c.tint)}">${ITEM_ICON[w.icon] || I.gift}${w.done ? "" : `<button class="save ${state.supporter.saved.has(w.id) ? "on" : ""}" data-save="${w.id}" title="Save">${I.bookmark}</button>`}</div>
+    <div class="thumb"><img src="${img}" alt="">${w.done ? "" : `<button class="save ${state.supporter.saved.has(w.id) ? "on" : ""}" data-save="${w.id}" title="Save">${I.bookmark}</button>`}</div>
     <div class="t"><b>${esc(w.title)}</b><span class="price">${money(w.price)}</span></div>
-    <span class="store">${esc(w.store)}${w.done ? ' · <span class="badge good">Gifted</span>' : w.contrib ? ' · <span class="badge">Contribute together</span>' : ""}</span>
-    <p class="why">"${esc(w.why)}"</p>
-    ${w.contrib && !w.done ? `<div class="progress"><i style="width:${pct}%"></i></div><div class="pr"><span>${money(raised)} raised</span><span>${money(w.price - raised)} to go</span></div>` : ""}
-    ${w.done ? `<button class="btn btn-ghost btn-sm" disabled>Already gifted</button>` : `<a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">${I.gift}<span>${w.contrib ? "Contribute" : "Gift this"}</span></a>`}
+    <span class="store">${esc(w.store)}${w.done ? ' · <span class="badge good">Gifted</span>' : w.contrib ? ' · <span class="badge">Together</span>' : ""}</span>
+    <p class="why">${esc(w.why)}</p>
+    ${w.contrib && !w.done ? `<div class="progress"><i style="width:${pct}%"></i></div><div class="pr"><span>${money(raised)}</span><span>${money(w.price - raised)} left</span></div>` : ""}
+    ${w.done ? `<button class="btn btn-ghost btn-sm" disabled>Gifted</button>` : `<a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">${I.gift}<span>${w.contrib ? "Chip in" : "Gift"}</span></a>`}
   </div>`;
 }
 function postCard(c, p, i) {
@@ -596,22 +598,21 @@ function coffeeCard(c) {
     <div class="ic">${I.cup}</div>
     <b>Buy ${esc(c.name.split(" ")[0])} a coffee</b>
     <p>One-time tip. No shipping, nothing to unbox. They keep 100%.</p>
-    <div class="amounts">${[1, 3, 5, 10].map((a) => `<button class="chip" data-coffee="${a}" data-ch="${c.handle}">${a === 1 ? "1 coffee" : a + " coffees"} · ${money(a)}</button>`).join("")}</div>
-    <a class="btn btn-primary btn-block" href="#/boost/${c.handle}">Send a boost</a>
+    <div class="amounts">${[1, 3, 5, 10].map((a) => `<button class="chip" data-coffee="${a}" data-ch="${c.handle}">${money(a)}</button>`).join("")}</div>
+    <a class="btn btn-primary btn-block" href="#/boost/${c.handle}">Send coffee</a>
   </div>`;
 }
 function membersTeaser(c) {
   const tiers = c.members || [{ id: "soon", name: "Memberships", price: 5, perks: ["Exclusive posts", "Member badge"], live: false, premium: true }];
   return `<div class="members-card">
     <div class="h"><span>Memberships</span><span class="badge violet">Premium slot</span></div>
-    ${tiers.map((t) => `<div class="tier ${t.live ? "" : "soon"}"><div><b>${esc(t.name)}</b><small>${t.perks.join(" · ")}</small></div><span>${t.live ? money(t.price) + "/mo" : "Soon"}</span></div>`).join("")}
-    <p class="muted" style="font-size:12px">Paid clubs, custom domains, and collab seats stay reserved for Studio — free pages keep shop, posts, and gifts.</p>
+    ${tiers.map((t) => `<div class="tier ${t.live ? "" : "soon"}"><div><b>${esc(t.name)}</b><small>${t.live ? t.perks[0] : "Studio perk"}</small></div><span>${t.live ? money(t.price) + "/mo" : "Soon"}</span></div>`).join("")}
   </div>`;
 }
 function galleryGrid(c) {
   const pics = c.gallery || (c.posts || []).filter((p) => p.img).map((p) => p.img);
   if (!pics.length) return `<div class="empty">No gallery yet — posts with photos land here.</div>`;
-  return `<div class="gal">${pics.map((src, i) => `<button class="gal-item" data-act="noop"><img src="${src}" alt="" style="object-position:${(i % 3) * 30}% ${(i % 2) * 40}%"></button>`).join("")}</div>`;
+  return `<div class="gal">${pics.map((src) => `<button class="gal-item" type="button"><img src="${src}" alt=""></button>`).join("")}</div>`;
 }
 function pageCreator(handle, tab) {
   const c = findCreator(handle); if (!c) return marketingPage("", `<div class="wrap"><div class="empty" style="margin:60px 0">That creator doesn't exist (yet).</div></div>`);
@@ -620,9 +621,12 @@ function pageCreator(handle, tab) {
   const open = c.wishlist.filter((w) => !w.done), done = c.wishlist.filter((w) => w.done);
   const tabs = [["home", "Home"], ["posts", "Posts"], ["shop", "Shop"], ["gallery", "Gallery"], ["wishlist", "Wishlist"], ["members", "Members"], ["about", "About"]];
   let body = "";
-  if (profileTab === "home") body = `<div class="feed-col">${c.goal ? goalCard(c) : ""}${c.commissions ? commissionCard(c) : ""}${(c.posts || []).slice(0, 2).map((p, i) => postCard(c, p, i)).join("")}
-    <div class="pro-block"><div class="h"><b>Shop</b><a href="#/creator/${c.handle}/shop">See all</a></div><div class="shop-grid compact">${(c.shop || []).slice(0, 3).map((s) => shopItem(c, s)).join("") || `<div class="empty">Shop coming soon.</div>`}</div></div>
-    <div class="pro-block"><div class="h"><b>Gallery</b><a href="#/creator/${c.handle}/gallery">View gallery</a></div>${galleryGrid({ ...c, gallery: (c.gallery || []).slice(0, 6) })}</div></div>`;
+  if (profileTab === "home") body = `<div class="home-stack">
+    ${c.goal ? goalCard(c) : ""}
+    <div class="home-posts">${(c.posts || []).slice(0, 2).map((p, i) => postCard(c, p, i)).join("")}</div>
+    <div class="pro-block"><div class="h"><b>Shop</b><a href="#/creator/${c.handle}/shop">All</a></div><div class="shop-grid compact">${(c.shop || []).slice(0, 3).map((s) => shopItem(c, s)).join("")}</div></div>
+    <div class="pro-block"><div class="h"><b>Gallery</b><a href="#/creator/${c.handle}/gallery">All</a></div>${galleryGrid({ ...c, gallery: (c.gallery || []).slice(0, 6) })}</div>
+  </div>`;
   else if (profileTab === "posts") body = `<div class="feed-col">${(c.posts || []).length ? c.posts.map((p, i) => postCard(c, p, i)).join("") : `<div class="empty">No posts yet.</div>`}</div>`;
   else if (profileTab === "shop") body = shopTab(c);
   else if (profileTab === "gallery") body = galleryGrid(c);
@@ -968,7 +972,7 @@ function enhance() {
   // steps connector
   const steps = root.querySelector(".steps"); if (steps && !steps.dataset.seen) { steps.dataset.seen = 1; new IntersectionObserver((es, o) => es.forEach((e) => { if (e.isIntersecting) { steps.classList.add("in-view"); o.disconnect(); } }), { threshold: 0.3 }).observe(steps); }
   // sliding tab indicator
-  root.querySelectorAll(".tabs").forEach((tabs) => { const on = tabs.querySelector(".on"); if (!on || tabs.querySelector(".ind")) return; const ind = document.createElement("span"); ind.className = "ind"; tabs.appendChild(ind); const place = (el, instant) => { if (instant) ind.style.transition = "none"; ind.style.left = el.offsetLeft + "px"; ind.style.width = el.offsetWidth + "px"; if (instant) requestAnimationFrame(() => (ind.style.transition = "")); }; place(on, true); tabs.querySelectorAll("a,button").forEach((t) => t.addEventListener("mouseenter", () => place(t)) ); tabs.addEventListener("mouseleave", () => place(tabs.querySelector(".on"))); });
+  root.querySelectorAll(".tabs").forEach((tabs) => { if (tabs.closest(".pro-page")) return; const on = tabs.querySelector(".on"); if (!on || tabs.querySelector(".ind")) return; const ind = document.createElement("span"); ind.className = "ind"; tabs.appendChild(ind); const place = (el, instant) => { if (instant) ind.style.transition = "none"; ind.style.left = el.offsetLeft + "px"; ind.style.width = el.offsetWidth + "px"; if (instant) requestAnimationFrame(() => (ind.style.transition = "")); }; place(on, true); tabs.querySelectorAll("a,button").forEach((t) => t.addEventListener("mouseenter", () => place(t)) ); tabs.addEventListener("mouseleave", () => place(tabs.querySelector(".on"))); });
   // confetti on sent page
   if (root.querySelector(".thanks-page") && !root.querySelector(".thanks-page").dataset.seen) { root.querySelector(".thanks-page").dataset.seen = 1; confetti(); }
   // body hue shifts by section in view
