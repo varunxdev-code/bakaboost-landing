@@ -1,5 +1,20 @@
 /* BakaBoost prototype — single-file site with hash routing. All state is in memory. */
-const IMG = { hero: "assets/hero.jpg", av1: "assets/av1.jpg", av2: "assets/av2.jpg", post1: "assets/post1.jpg" };
+const IMG = {
+  hero: "assets/hero.jpg",
+  av1: "assets/av1.jpg",
+  av2: "assets/av2.jpg",
+  post1: "assets/post1.jpg",
+  kat: "assets/kat.gif",
+  galleryRoom: "assets/gallery-room.jpg",
+  galleryGamer: "assets/gallery-gamer.jpg",
+  galleryDesk: "assets/gallery-desk.jpg",
+  heroGirl: "assets/hero-girl.png",
+  shopSony: "assets/shop/sony-wh1000xm5.jpg",
+  shopInstax: "assets/shop/instax-mini-12.jpg",
+  shopKeys: "assets/shop/mx-keys-mini.jpg",
+  shopYeti: "assets/shop/yeti-nano.jpg",
+  shopTote: "assets/shop/coquette-tote.jpg",
+};
 
 /* ---------- Icons (stroke SVG, 24 grid) ---------- */
 const I = {
@@ -70,9 +85,16 @@ const I = {
 const ITEM_ICON = { headset: I.headset, pen: I.pen, camera: I.camera, shirt: I.shirt, cup: I.cup, book: I.book, box: I.box, sparkle: I.sparkle };
 
 /* ---------- Sample data (example accounts, not real people) ---------- */
-const TINTS = ["linear-gradient(135deg,#fde4ee,#fbd3e3)", "linear-gradient(135deg,#f1ecff,#e3dbfb)", "linear-gradient(135deg,#fdeaf1,#f5d9ea)", "linear-gradient(135deg,#e6f5ee,#d6eee2)", "linear-gradient(135deg,#fff0e6,#fddcc9)", "linear-gradient(135deg,#fbe7f1,#eedcf7)"];
+const TINTS = [
+  "linear-gradient(135deg,#FCE7F3 0%,#F0EBFF 100%)",
+  "linear-gradient(135deg,#F0EBFF 0%,#EDE9FE 100%)",
+  "linear-gradient(135deg,#FFE8D6 0%,#FCE7F3 100%)",
+  "linear-gradient(135deg,#D1FAE5 0%,#F0EBFF 100%)",
+  "linear-gradient(135deg,#E0F2FE 0%,#F0EBFF 100%)",
+  "linear-gradient(135deg,#FEF3C7 0%,#FCE7F3 100%)",
+];
 const creators = [
-  { handle: "lunaaoki", name: "Luna Aoki", tagline: "Illustrator & Streamer", theme: { accent: "pink" }, links: ["twitch.tv/lunaaoki", "x.com/lunaaoki"], verified: true, avatar: IMG.av1, tint: 0, cats: ["Art", "Streaming"], bio: "Artist & streamer. Making cute things and chasing big dreams. Wishlist is mostly studio upgrades — every gift shows up on stream ♡", followers: 12400, gifts: 318, location: "Tokyo",
+  { handle: "lunaaoki", name: "Luna Aoki", tagline: "Illustrator & Streamer", theme: { accent: "pink" }, links: ["twitch.tv/lunaaoki", "x.com/lunaaoki"], verified: true, avatar: IMG.kat, tint: 0, cats: ["Art", "Streaming"], bio: "Artist & streamer. Making cute things and chasing big dreams. Wishlist is mostly studio upgrades — every gift shows up on stream ♡", followers: 12400, gifts: 318, location: "Tokyo",
     wishlist: [
       { id: "w1", title: "Wacom Cintiq 16 pen display", store: "Wacom", price: 649, icon: "pen", why: "My old tablet's screen is starting to flicker mid-stream.", raised: 410, contrib: true },
       { id: "w2", title: "Ring light 18\" with stand", store: "Amazon", price: 74, icon: "camera", why: "The pink-hour lighting on stream is all from one desk lamp." },
@@ -83,12 +105,11 @@ const creators = [
     ],
     goal: { title: "New art setup", target: 1200, raised: 985, desc: "Pen display, proper lighting, and headphones that aren't gaming cans.", unlock: "Night Drop wallpaper set for everyone who chipped in" },
     shop: [
-      { id: "s1", title: "Coquette Phone Portrait", kind: "Wallpaper · PNG", price: 8.99, icon: "image", img: IMG.hero },
-      { id: "s2", title: "Sticker Pack Vol.1", kind: "12 stickers · PNG", price: 4.99, icon: "sticker", img: IMG.post1 },
-      { id: "s3", title: "Desktop Wallpaper Set", kind: "4K · 6 files", price: 7.99, icon: "monitor", img: IMG.hero },
-      { id: "s4", title: "After Dark Set", kind: "18+ · PNG", price: 12, icon: "image", adult: true, img: IMG.av1 },
-      { id: "s5", title: "Brush Pack: Soft Inks", kind: "Procreate", price: 6, icon: "brush", img: IMG.post1 },
-      { id: "s6", title: "Process Video: OC Redesign", kind: "MP4 · 42 min", price: 5, icon: "camera", img: IMG.hero },
+      { id: "s1", title: "Sony WH-1000XM5", kind: "Sony", price: 349, img: IMG.shopSony },
+      { id: "s2", title: "Fujifilm Instax Mini 12", kind: "Fujifilm", price: 79, img: IMG.shopInstax },
+      { id: "s3", title: "Logitech MX Keys Mini", kind: "Logitech", price: 99, img: IMG.shopKeys },
+      { id: "s4", title: "Blue Yeti Nano", kind: "Blue", price: 99, img: IMG.shopYeti },
+      { id: "s5", title: "Coquette Tote Bag", kind: "Accessories", price: 35, img: IMG.shopTote },
     ],
     commissions: { open: true, slots: 5, taken: 3, from: 45, deposit: 50, turnaround: "2–3 weeks", tiers: ["Bust · $45", "Half body · $80", "Full body · $140"] },
     members: [
@@ -98,11 +119,15 @@ const creators = [
     ],
     boosts: [{ from: "Mika", amount: 15, msg: "Keep creating!", when: "1h" }, { from: "Anonymous", amount: 5, msg: "for coffee ♡", when: "4h" }, { from: "pixel_rin", amount: 25, msg: "for the new setup", when: "1d" }],
     posts: [
-      { text: "new setup ♡ what do you think?", img: IMG.post1, likes: 1200, comments: 84, reposts: 32, when: "2h", tag: "IRL" },
-      { text: "Warm-up sketches from tonight's stream. Thank you for keeping me company!", img: IMG.hero, likes: 860, comments: 41, reposts: 12, when: "1d", tag: "Art" },
-      { text: "Sticker pack vol.1 is live in the shop — instant download, 0% platform cut.", img: IMG.post1, likes: 540, comments: 29, reposts: 18, when: "3d", tag: "Shop" },
+      { text: "new setup ♡ what do you think?", likes: 1200, comments: 84, reposts: 32, when: "2h", tag: "IRL" },
+      { text: "Warm-up sketches from tonight's stream. Thank you for keeping me company!", img: IMG.post1, likes: 860, comments: 41, reposts: 12, when: "1d", tag: "Art" },
+      { text: "Sticker pack vol.1 is live in the shop — instant download, 0% platform cut.", likes: 540, comments: 29, reposts: 18, when: "3d", tag: "Shop" },
     ],
-    gallery: [IMG.hero, IMG.post1, IMG.av1, IMG.hero, IMG.post1, IMG.av2],
+    gallery: [
+      { src: IMG.galleryRoom, title: "Cat laptop — sleeping room at sunset", source: "https://pixabay.com/illustrations/cat-laptop-sleeping-room-sunset-10304519/" },
+      { src: IMG.galleryGamer, title: "Headphone gamer girl", source: "https://pixabay.com/illustrations/headphone-girl-gamer-gamer-girl-6881329/" },
+      { src: IMG.galleryDesk, title: "Computer desk illustration", source: "https://pixabay.com/illustrations/computer-table-cabinet-room-7498415/" },
+    ],
   },
   { handle: "nekochii", name: "NekoChii", tagline: "Cosplayer", theme: { accent: "violet" }, links: ["instagram.com/nekochii"], verified: true, avatar: IMG.av2, tint: 1, cats: ["Cosplay", "IRL"], bio: "Cosplayer, hoodie collector, chronic con-goer. Wishlist = next build materials.", followers: 8900, gifts: 204, location: "Osaka",
     wishlist: [
@@ -110,32 +135,36 @@ const creators = [
       { id: "n2", title: "Heat gun, variable temp", store: "Amazon", price: 39, icon: "sparkle", why: "Borrowing my roommate's is getting awkward." },
       { id: "n3", title: "Pink oversized hoodie (M)", store: "Uniqlo", price: 45, icon: "shirt", why: "Pink hoodie season is a lifestyle." },
     ],
+    gallery: [IMG.av2, IMG.post1],
     posts: [{ text: "pink hoodie season ♡", likes: 640, comments: 22, reposts: 8, when: "5h", tag: "Cosplay" }],
   },
-  { handle: "mikachu", name: "Mika", tagline: "Bedroom pop", theme: { accent: "peach" }, links: ["youtube.com/@mikachu"], verified: true, avatar: IMG.av1, tint: 2, cats: ["Music"], bio: "Bedroom pop and lo-fi covers. Trying to build a tiny studio one gift at a time.", followers: 5100, gifts: 96, location: "Seoul",
+  { handle: "mikachu", name: "Mika", tagline: "Bedroom pop", theme: { accent: "peach" }, links: ["youtube.com/@mikachu"], verified: true, avatar: IMG.kat, tint: 2, cats: ["Music"], bio: "Bedroom pop and lo-fi covers. Trying to build a tiny studio one gift at a time.", followers: 5100, gifts: 96, location: "Seoul",
     wishlist: [
       { id: "m1", title: "Audio-Technica AT2020 mic", store: "Sweetwater", price: 99, icon: "headset", why: "Recording on a headset mic right now." },
       { id: "m2", title: "Focusrite Scarlett Solo", store: "Sweetwater", price: 129, icon: "box", why: "To actually plug the mic into something." },
     ],
+    gallery: [IMG.kat, IMG.hero],
     posts: [{ text: "cover of a song you all requested is up tonight ♡", likes: 410, comments: 37, reposts: 15, when: "3h", tag: "Music" }],
   },
-  { handle: "reinyan", name: "Rei", tagline: "Cozy games streamer", theme: { accent: "mint" }, links: ["twitch.tv/reinyan"], verified: false, avatar: IMG.av2, tint: 3, cats: ["Games", "Streaming"], bio: "Cozy games, chaotic commentary. Wishlist helps me keep streaming on a student budget.", followers: 3300, gifts: 58, location: "Berlin",
+  { handle: "reinyan", name: "Rei", tagline: "Cozy games streamer", theme: { accent: "mint" }, links: ["twitch.tv/reinyan"], verified: false, avatar: IMG.av1, tint: 3, cats: ["Games", "Streaming"], bio: "Cozy games, chaotic commentary. Wishlist helps me keep streaming on a student budget.", followers: 3300, gifts: 58, location: "Berlin",
     wishlist: [
       { id: "r1", title: "Capture card, 1080p60", store: "Elgato", price: 119, icon: "box", why: "Console streams at 30fps are hurting my soul." },
       { id: "r2", title: "Matcha latte set", store: "Ippodo", price: 38, icon: "cup", why: "Stream fuel." },
     ],
+    gallery: [IMG.post1, IMG.av1],
     posts: [{ text: "8-hour cozy farming stream tomorrow. bring snacks.", likes: 210, comments: 19, reposts: 4, when: "6h", tag: "Games" }],
   },
-  { handle: "yumisroom", name: "yumi", tagline: "Writer", theme: { accent: "violet" }, links: ["yumisroom.substack.com"], verified: false, avatar: IMG.av1, tint: 4, cats: ["Writing", "Self care"], bio: "Writes soft fiction and journaling prompts. Gifts go toward printing the zine.", followers: 2100, gifts: 40, location: "Vancouver",
+  { handle: "yumisroom", name: "yumi", tagline: "Writer", theme: { accent: "violet" }, links: ["yumisroom.substack.com"], verified: false, avatar: IMG.av2, tint: 4, cats: ["Writing", "Self care"], bio: "Writes soft fiction and journaling prompts. Gifts go toward printing the zine.", followers: 2100, gifts: 40, location: "Vancouver",
     wishlist: [
       { id: "y1", title: "Zine print run, 100 copies", store: "Mixam", price: 240, icon: "book", why: "Issue 3 is written. It just needs to exist.", raised: 96, contrib: true },
       { id: "y2", title: "Hobonichi Techo 2027", store: "Hobonichi", price: 42, icon: "book", why: "The planner that keeps the writing going." },
     ],
     goal: { title: "Print issue 3", target: 400, raised: 96, desc: "100 copies of the zine, plus mailers.", unlock: "Digital issue 3 for every contributor" },
     boosts: [{ from: "Anonymous", amount: 10, msg: "issue 2 made me cry too", when: "2d" }],
+    gallery: [IMG.hero, IMG.av2],
     posts: [{ text: "issue 3 draft done. crying a little.", likes: 180, comments: 24, reposts: 6, when: "1d", tag: "Writing" }],
   },
-  { handle: "soradraws", name: "Sora", tagline: "Fan art & OCs", theme: { accent: "pink" }, links: ["x.com/soradraws", "ko-fi.com/soradraws"], verified: true, avatar: IMG.av2, tint: 5, cats: ["Art", "Anime"], bio: "Fan art and original characters. Commissions open. Every gifted brush pack gets a thank-you doodle.", followers: 15800, gifts: 502, location: "Manila",
+  { handle: "soradraws", name: "Sora", tagline: "Fan art & OCs", theme: { accent: "pink" }, links: ["x.com/soradraws", "ko-fi.com/soradraws"], verified: true, avatar: IMG.kat, tint: 5, cats: ["Art", "Anime"], bio: "Fan art and original characters. Commissions open. Every gifted brush pack gets a thank-you doodle.", followers: 15800, gifts: 502, location: "Manila",
     wishlist: [
       { id: "s1", title: "Procreate brush bundle", store: "Gumroad", price: 24, icon: "pen", why: "Trying textured inks for the next series." },
       { id: "s2", title: "iPad Pro 11\" (2026)", store: "Apple", price: 999, icon: "pen", why: "Current one is from 2019 and it's tired.", raised: 615, contrib: true },
@@ -146,9 +175,10 @@ const creators = [
       { id: "so1", title: "OC Redesign Print", kind: "A4 · PNG", price: 9, icon: "image" },
       { id: "so2", title: "Chibi Sticker Set", kind: "8 stickers", price: 4, icon: "sticker" },
     ],
+    gallery: [IMG.kat, IMG.post1, IMG.hero],
+    posts: [{ text: "new art piece! ♡ OC redesign finally done", likes: 1100, comments: 46, reposts: 28, when: "1d", tag: "Art" }],
     commissions: { open: false, slots: 4, taken: 4, from: 60, deposit: 50, turnaround: "4 weeks", tiers: ["Bust · $60", "Half body · $110", "Full body · $190"] },
     boosts: [{ from: "pixel_rin", amount: 20, msg: "for the OC redesign!!", when: "6h" }],
-    posts: [{ text: "new art piece! ♡ OC redesign finally done", likes: 1100, comments: 46, reposts: 28, when: "1d", tag: "Art" }],
   },
 ];
 const ACCENTS = { pink: { a: "#e9498b", d: "#d43679", soft: "#fde9f0" }, violet: { a: "#6f55e3", d: "#5a41cc", soft: "#efebff" }, mint: { a: "#2f9a70", d: "#237a58", soft: "#e3f4ec" }, peach: { a: "#e8743b", d: "#c85c28", soft: "#fdece2" } };
@@ -156,7 +186,7 @@ const CATS = ["All", "Art", "Cosplay", "Games", "Music", "Streaming", "Writing",
 
 /* The signed-in creator's dashboard uses Luna's account as the example. */
 const state = {
-  user: { name: "Luna Aoki", handle: "lunaaoki", role: "creator", avatar: IMG.av1 },
+  user: { name: "Luna Aoki", handle: "lunaaoki", role: "creator", avatar: IMG.kat },
   following: new Set(["nekochii", "soradraws"]),
   liked: new Set(),
   gifts: [
@@ -173,7 +203,7 @@ const state = {
   wishVisibility: {},
 };
 state.role = "creator";
-state.supporter = { name: "misa", handle: "misaluvr", avatar: IMG.av2, bio: "Sends ring lights to people who make me smile.", anonDefault: true,
+state.supporter = { name: "misa", handle: "misaluvr", avatar: IMG.kat, bio: "Sends ring lights to people who make me smile.", anonDefault: true,
   saved: new Set(["w1", "s2", "n3"]),
   sent: [
     { to: "lunaaoki", kind: "gift", item: "Ring light 18\" with stand", amount: 74, anon: true, msg: "For the pink-hour lighting. Keep streaming ♡", when: "Today", step: 1, thanked: false },
@@ -251,8 +281,12 @@ function footer() {
     </div>
   </footer></div>`;
 }
-function marketingPage(active, body) { return `<div class="page">${marketingNav(active)}${body}${footer()}</div>`; }
-
+function marketingPage(active, body, opts = {}) {
+  return `<div class="page${opts.scene ? " pro-scene" : ""}${opts.homeHero ? " home-hero" : ""}">${opts.scene ? pro3dScene() : ""}${marketingNav(active)}${body}${footer()}</div>`;
+}
+function pro3dScene() {
+  return `<div class="pro-3d" aria-hidden="true"><img src="${IMG.heroGirl}" alt=""></div>`;
+}
 function appShell(active, body) {
   const creatorNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["dashboard", "Dashboard", I.grid], ["dashboard/page", "My page", I.palette], ["dashboard/wishlist", "My wishlist", I.list], ["dashboard/gifts", "Gifts", I.inbox, state.gifts.filter((g) => !g.thanked).length], ["dashboard/thanks", "Thank-yous", I.heart], ["dashboard/badges", "Badges", I.medal], ["dashboard/settings", "Settings", I.cog]];
   const supporterNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["account", "My account", I.user], ["account/gifts", "Gifts I've sent", I.gift, state.supporter.sent.filter((s) => s.step < 2).length], ["account/following", "Following", I.heart], ["account/saved", "Saved wishes", I.bookmark], ["account/library", "Library", I.library], ["account/badges", "Badges", I.medal], ["account/settings", "Settings", I.cog]];
@@ -300,12 +334,17 @@ function pageHome() {
   const star = `<span class="stars">${I.star.repeat(5)}</span>`;
   const feat = (ic, bg, col, title, txt) => `<div class="feat spot" style="--fc:${col}"><div class="ic" style="background:${bg};color:${col}">${ic}</div><b>${title}</b><p>${txt}</p></div>`;
   return marketingPage("", `
-  <div class="wrap">
-    <section class="hero5"><div class="mesh"></div>${petals()}<div class="wrap">
+  <section class="hero5">
+    <div class="hero-art" aria-hidden="true"><img src="${IMG.heroGirl}" alt=""></div>
+    <div class="wrap hero-copy">
       <span class="pill"><span class="dot"></span>Free for creators · 0% platform cut</span>
       <h1>${["Share", "your", "passion,"].map((w, i) => `<span class="w" style="animation-delay:${.1 + i * .08}s">${w}</span>`).join(" ")}<br><span class="em">${["earn", "their", "hearts."].map((w, i) => `<span class="w" style="animation-delay:${.34 + i * .08}s">${w}</span>`).join(" ")}</span></h1>
       <p class="lede">Shop, commissions, wishlist &amp; gifts — built for anime artists, VTubers &amp; illustrators. <b>Stay private. Keep every yen.</b></p>
-      <div class="hero-ctas"><a class="btn btn-primary btn-lg" href="#/creator/lunaaoki">See a creator page</a><a class="btn btn-ghost btn-lg" href="#/how">How it works</a></div>
+      <div class="hero-ctas"><a class="btn btn-primary btn-lg" href="#/explore">Explore creators</a><a class="btn btn-ghost btn-lg" href="#/creator/lunaaoki">Preview a page</a></div>
+    </div>
+  </section>
+  <div class="wrap">
+    <section class="hero-below">
       <div class="split">
         <div class="pane spot"><div class="txt"><span class="badge" style="align-self:flex-start">★ For creators</span><h2>Create your page</h2><p>Open a shop, wishlist &amp; commission slots. Fans boost you — you keep 100%.</p></div><a class="btn btn-primary" href="#/signup"><span>Start your page</span>${I.arrow}</a><div class="art"><img src="${IMG.hero}" alt=""></div></div>
         <div class="pane spot"><div class="txt"><span class="badge violet" style="align-self:flex-start">♥ For supporters</span><h2>Support a creator</h2><p>Send an anonymous boost, gift a wish, or buy digital art — private &amp; secure.</p></div><a class="btn btn-violet" href="#/explore"><span>Explore creators</span>${I.arrow}</a><div class="art">${envelopeArt()}</div></div>
@@ -316,7 +355,7 @@ function pageHome() {
         <div>${I.shield}<div><b>Secure checkout</b><span>Your data is protected.</span></div></div>
         <div>${I.mask}<div><b>Anonymous gifting</b><span>Gifts without a name attached.</span></div></div>
       </div>
-    </div></section>
+    </section>
     <div class="platforms"><span class="eyebrow">Built for creators on every platform</span><div class="marquee"><div class="row track">${[1, 2].map(() => ["Twitch", "YouTube", "TikTok", "X", "Instagram", "Discord", "Kick", "Bluesky", "Patreon", "Threads", "Pixiv", "Booth"].map((p) => `<span>${p}</span>`).join("")).join("")}</div></div></div>
   </div>
 
@@ -438,21 +477,20 @@ function pageHome() {
       <details><summary>Can I sell 18+ digital goods?</summary><div class="a">Yes, within our content rules. Adult items show as locked cards in your grid and only unlock for signed-in adults who opt in.</div></details>
       <details><summary>Is my address private?</summary><div class="a">Always. Stores ship to your BakaBoost relay and we forward to you. Supporters see a timeline, never a street — not even a city.</div></details>
     </div>
-    <div style="text-align:center;margin-top:16px"><a href="#/safety" style="font-weight:700">More on safety &amp; privacy</a></div>
+    <div style="text-align:center;margin-top:16px"><a href="#/safety" style="font-weight:600">More on safety &amp; privacy</a></div>
   </div></section>
 
   <section class="section"><div class="wrap"><div class="plum"><div><h2>Your community is ready to cheer you on.</h2><p style="color:#cbbfd8;margin-top:10px;max-width:40ch">Anime creators keep 100% of gifts, shop sales and commissions here. Open beta — claim your handle early.</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px"><a class="btn btn-primary" href="#/signup">Create your free page</a><a class="btn btn-ghost" style="background:transparent;color:var(--plum-ink);border-color:rgba(255,255,255,.25)" href="#/explore">Browse Explore</a></div></div><div class="glow"></div><div data-px="0.08" style="position:absolute;right:0;top:0;bottom:0;width:300px">${bloomArt()}</div></div></div></section>
-  `);
+  `, { homeHero: true });
 }
 
 function creatorCard(c) {
-  return `<a class="ccard tilt" href="#/creator/${c.handle}">
-    <div class="banner" style="${thumbStyle(c.tint)}"></div>
+  return `<a class="ccard" href="#/creator/${c.handle}">
+    <img class="avatar" src="${c.avatar}" width="48" height="48" alt="">
     <div class="body">
-      <div class="row"><img class="avatar" src="${c.avatar}" width="64" height="64" alt=""><span class="meta">${c.wishlist.filter((w) => !w.done).length} open wishes</span></div>
-      <div><b style="display:flex;align-items:center;gap:6px">${esc(c.name)}${c.verified ? `<span style="width:16px;height:16px;color:var(--accent);display:inline-flex">${I.verified}</span>` : ""}</b><span class="meta">@${c.handle} · ${k(c.followers)} supporters</span></div>
-      <p class="meta" style="color:var(--ink-2)">${esc(c.bio.split(".")[0])}.</p>
-      <div class="row"><div class="tags">${c.cats.map((t) => `<span class="tag">${t}</span>`).join("")}</div>${badgeRow(badgeState(CREATOR_BADGES, c).filter((b) => b.earned).slice(0, 3), { size: "sm" })}</div>
+      <div class="row"><b>${esc(c.name)}${c.verified ? `<span class="tick">${I.verified}</span>` : ""}</b><span class="meta">${c.wishlist.filter((w) => !w.done).length} wishes</span></div>
+      <span class="meta">@${c.handle} · ${k(c.followers)} supporters</span>
+      <div class="tags">${c.cats.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
     </div></a>`;
 }
 
@@ -496,9 +534,9 @@ function pagePricing() {
         <a class="btn btn-violet btn-block" href="#/signup">Start Studio</a></div>
     </div>
     <div class="narrow" style="margin:56px 0 0; max-width:560px; width:100%">
-      <h3 style="font-family:var(--sans);font-weight:700;font-size:18px;margin-bottom:6px">What a $74 gift actually costs</h3>
+      <h3 style="font-family:var(--sans);font-weight:600;font-size:18px;margin-bottom:6px">What a $74 gift actually costs</h3>
       <table class="fee-table"><tr><th>Line</th><th>Amount</th></tr><tr><td>Ring light 18" with stand</td><td>$74.00</td></tr><tr><td>Shipping to relay</td><td>$0.00</td></tr><tr><td>Platform cut</td><td>$0.00</td></tr><tr><td>Card processing (2.9% + 30¢)</td><td>$2.45</td></tr><tr><td><b>Supporter pays</b></td><td><b>$76.45</b></td></tr><tr><td>Creator receives</td><td>the ring light</td></tr></table>
-      <h3 style="font-family:var(--sans);font-weight:700;font-size:18px;margin:28px 0 6px">And a $9 shop sale</h3>
+      <h3 style="font-family:var(--sans);font-weight:600;font-size:18px;margin:28px 0 6px">And a $9 shop sale</h3>
       <table class="fee-table"><tr><th>Line</th><th>Amount</th></tr><tr><td>OC Redesign Print</td><td>$9.00</td></tr><tr><td>Platform cut</td><td>$0.00</td></tr><tr><td>Card processing</td><td>−$0.56</td></tr><tr><td><b>Creator keeps</b></td><td><b>$8.44</b></td></tr></table>
       <p class="muted" style="font-size:13px;margin-top:12px">Processing rate shown is the prototype's sample; the real rate is whatever the payment processor charges, passed through with no markup.</p>
     </div>
@@ -537,7 +575,6 @@ function pageExplore(inApp) {
   const body = `<div class="${inApp ? "" : "wrap"}"><section class="${inApp ? "" : "section"}" style="${inApp ? "" : "padding-top:40px"}">
     <div class="main-head" style="margin-bottom:24px"><div><span class="eyebrow">Explore</span><h2>Creators with open wishes</h2></div>
       <label class="search" style="min-width:280px">${I.search}<input id="explore-q" placeholder="Search creators" value="${esc(exploreQ)}"></label></div>
-    <div class="spotlight">${[["pixel_rin", "Top booster this week", "$140 across 4 creators", "gold"], ["moon_moth", "Goal hero", "Funded Luna's art setup", "violet"], ["misaluvr", "Kind note streak", "5 notes in a row", "pink"]].map(([h, t, s, tier], i) => `<div class="spot-card"><span class="rank">${i + 1}</span><span class="avatar" style="display:grid;place-items:center;color:var(--violet);background:var(--violet-soft)">${I.user}</span><div><b>@${h}</b><small>${s}</small></div><span class="badge ${tier === "gold" ? "" : tier === "violet" ? "violet" : ""}" style="${tier === "gold" ? "background:#fff3cf;color:#c9931a" : ""}">${t}</span></div>`).join("")}</div>
     <div class="filters">${CATS.map((c) => `<button class="chip ${c === exploreCat ? "on" : ""}" data-cat="${c}">${c}</button>`).join("")}</div>
     ${list.length ? `<div class="creator-grid">${list.map(creatorCard).join("")}</div>` : `<div class="empty">No creators match that yet. Try another interest.</div>`}
   </section></div>`;
@@ -547,10 +584,9 @@ function pageExplore(inApp) {
 /* ---------- Creator profile ---------- */
 function wishCard(c, w) {
   const raised = w.raised || 0, pct = Math.min(100, Math.round((raised / w.price) * 100));
-  const pool = c.gallery || [IMG.hero, IMG.post1, c.avatar];
-  const img = pool[Math.abs([...w.id].reduce((a, ch) => a + ch.charCodeAt(0), 0)) % pool.length];
+  const img = w.img;
   return `<div class="wish ${w.done ? "done" : ""}">
-    <div class="thumb"><img src="${img}" alt="">${w.done ? "" : `<button class="save ${state.supporter.saved.has(w.id) ? "on" : ""}" data-save="${w.id}" title="Save">${I.bookmark}</button>`}</div>
+    <div class="thumb">${img ? `<img src="${img}" alt="">` : (ITEM_ICON[w.icon] || I.gift)}${w.done ? "" : `<button class="save ${state.supporter.saved.has(w.id) ? "on" : ""}" data-save="${w.id}" title="Save">${I.bookmark}</button>`}</div>
     <div class="t"><b>${esc(w.title)}</b><span class="price">${money(w.price)}</span></div>
     <span class="store">${esc(w.store)}${w.done ? ' · <span class="badge good">Gifted</span>' : w.contrib ? ' · <span class="badge">Together</span>' : ""}</span>
     <p class="why">${esc(w.why)}</p>
@@ -558,14 +594,18 @@ function wishCard(c, w) {
     ${w.done ? `<button class="btn btn-ghost btn-sm" disabled>Gifted</button>` : `<a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">${I.gift}<span>${w.contrib ? "Chip in" : "Gift"}</span></a>`}
   </div>`;
 }
-function postCard(c, p, i) {
+function postCard(c, p, i, opts = {}) {
   const key = c.handle + i, liked = state.liked.has(key);
-  return `<article class="post">
-    <div class="head"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b style="display:flex;align-items:center;gap:4px">${esc(c.name)}${c.verified ? `<span style="width:14px;height:14px;color:var(--accent);display:inline-flex">${I.verified}</span>` : ""}</b><small>@${c.handle} · ${p.when}</small></div></a>
-      ${c.handle !== state.user.handle ? `<button class="btn btn-ghost btn-sm" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button>` : ""}</div>
+  const onProfile = opts.onProfile;
+  const head = onProfile
+    ? `<div class="head lite"><small>${p.when}</small>${p.tag ? `<span class="badge">${p.tag}</span>` : ""}</div>`
+    : `<div class="head"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b style="display:flex;align-items:center;gap:4px">${esc(c.name)}${c.verified ? `<span style="width:14px;height:14px;color:var(--accent);display:inline-flex">${I.verified}</span>` : ""}</b><small>@${c.handle} · ${p.when}</small></div></a>
+      ${c.handle !== state.user.handle ? `<button class="btn btn-ghost btn-sm" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button>` : ""}</div>`;
+  return `<article class="post${onProfile ? " lite" : ""}">
+    ${head}
     <p>${esc(p.text)}</p>
     ${p.img ? `<img class="media" src="${p.img}" alt="">` : ""}
-    <div class="acts"><button class="${liked ? "liked" : ""}" data-like="${key}"><span>${I.heart}${k(p.likes + (liked ? 1 : 0))}</span></button><span>${I.chat}${p.comments}</span><span>${I.repost}${p.reposts}</span>${p.tag ? `<span class="badge" style="margin-left:auto">${p.tag}</span>` : ""}</div>
+    <div class="acts"><button class="${liked ? "liked" : ""}" data-like="${key}"><span>${I.heart}${k(p.likes + (liked ? 1 : 0))}</span></button><span>${I.chat}${p.comments}</span><span>${I.repost}${p.reposts}</span></div>
   </article>`;
 }
 function thanksCard(c, t) {
@@ -579,18 +619,18 @@ function creatorHeader(c, opts = {}) {
   const isMe = c.handle === state.user.handle && state.role === "creator";
   const open = c.wishlist.filter((w) => !w.done);
   return `<div class="pro-head">
-    <div class="pro-banner" style="${thumbStyle(c.tint)}"><img src="${c.gallery && c.gallery[0] ? c.gallery[0] : IMG.hero}" alt="">${starField()}</div>
+    <div class="pro-banner" style="${thumbStyle(c.tint)}">${c.banner ? `<img src="${c.banner}" alt="">` : ""}<i class="pro-mesh"></i></div>
     <div class="pro-id">
       <img class="avatar" src="${c.avatar}" alt="">
       <div class="pro-name">
-        <b>${esc(c.name)}${c.verified ? I.verified : ""}</b>
-        <span class="muted">@${c.handle} · ${esc(c.tagline || "Creator")}</span>
-        <div class="pro-stats"><span><b>${k(c.followers)}</b> supporters</span><span><b>${c.gifts}</b> gifts</span><span><b>${open.length}</b> wishes</span><span>${esc(c.location || "")}</span></div>
+        <div class="pro-title"><b>${esc(c.name)}${c.verified ? I.verified : ""}</b></div>
+        <div class="pro-meta"><span class="handle">@${c.handle}</span><span class="role">${esc(c.tagline || "Creator")}</span></div>
+        <div class="pro-stats"><span class="stat"><b>${k(c.followers)}</b> supporters</span><i>·</i><span class="stat"><b>${c.gifts}</b> gifts</span><i>·</i><span class="stat"><b>${open.length}</b> wishes</span>${c.location ? `<i>·</i><span class="stat loc">${esc(c.location)}</span>` : ""}</div>
+        <p class="pro-bio">${esc(c.bio)}</p>
+        <div class="pro-links">${(c.links || []).map((l) => `<a href="#/creator/${c.handle}">${I.link}<span>${esc(l)}</span></a>`).join("")}<a href="#/creator/${c.handle}"><span>bakaboost.com/${c.handle}</span></a></div>
       </div>
       <div class="pro-acts">${opts.preview ? "" : isMe ? `<a class="btn btn-ghost" href="#/dashboard/page">${I.palette}<span>Edit page</span></a>` : `<button class="btn btn-ghost" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button><a class="btn btn-primary" href="#/boost/${c.handle}">${I.cup}<span>Buy a coffee</span></a>`}</div>
     </div>
-    <p class="pro-bio">${esc(c.bio)}</p>
-    <div class="pro-links">${(c.links || []).map((l) => `<a href="#/creator/${c.handle}">${I.link}${esc(l)}</a>`).join("")}<a href="#/creator/${c.handle}">bakaboost.com/${c.handle}</a></div>
   </div>`;
 }
 function coffeeCard(c) {
@@ -609,10 +649,31 @@ function membersTeaser(c) {
     ${tiers.map((t) => `<div class="tier ${t.live ? "" : "soon"}"><div><b>${esc(t.name)}</b><small>${t.live ? t.perks[0] : "Studio perk"}</small></div><span>${t.live ? money(t.price) + "/mo" : "Soon"}</span></div>`).join("")}
   </div>`;
 }
-function galleryGrid(c) {
-  const pics = c.gallery || (c.posts || []).filter((p) => p.img).map((p) => p.img);
-  if (!pics.length) return `<div class="empty">No gallery yet — posts with photos land here.</div>`;
-  return `<div class="gal">${pics.map((src) => `<button class="gal-item" type="button"><img src="${src}" alt=""></button>`).join("")}</div>`;
+function galleryGrid(c, opts = {}) {
+  const isMe = c.handle === state.user.handle && state.role === "creator";
+  const pics = (c.gallery || (c.posts || []).filter((p) => p.img).map((p) => p.img))
+    .map((pic) => typeof pic === "string" ? { src: pic, title: "", source: "" } : pic);
+  const tile = (pic, cls = "") => {
+    const content = `<img src="${pic.src}" alt="${esc(pic.title || "")}">${pic.title ? `<span class="gal-caption">${esc(pic.title)}</span>` : ""}`;
+    return pic.source
+      ? `<a class="gal-item ${cls}" href="${pic.source}" target="_blank" rel="noreferrer" aria-label="${esc(pic.title || "View image")}" draggable="false">${content}</a>`
+      : `<button class="gal-item ${cls}" type="button">${content}</button>`;
+  };
+  const editorial = () => {
+    if (!pics.length) return `<div class="empty">No gallery yet — posts with photos land here.</div>`;
+    const shown = pics.slice(0, 3);
+    return `<div class="gal-editorial ${shown.length === 1 ? "solo" : ""}">
+      ${tile(shown[0], "gal-featured")}
+      ${shown.length > 1 ? `<div class="gal-side ${shown.length === 2 ? "single" : ""}">${shown.slice(1).map((pic) => tile(pic)).join("")}</div>` : ""}
+    </div>`;
+  };
+  if (opts.preview) return editorial();
+  const extra = pics.slice(3);
+  return `<section class="gallery-page">
+    <div class="gallery-page-head"><b>Gallery</b>${isMe ? `<button class="btn btn-ghost btn-sm" type="button" data-act="add-gallery">${I.plus}<span>Add more</span></button>` : ""}</div>
+    ${editorial()}
+    ${extra.length ? `<div class="gal gallery-more">${extra.map((pic) => tile(pic)).join("")}</div>` : ""}
+  </section>`;
 }
 function pageCreator(handle, tab) {
   const c = findCreator(handle); if (!c) return marketingPage("", `<div class="wrap"><div class="empty" style="margin:60px 0">That creator doesn't exist (yet).</div></div>`);
@@ -622,12 +683,12 @@ function pageCreator(handle, tab) {
   const tabs = [["home", "Home"], ["posts", "Posts"], ["shop", "Shop"], ["gallery", "Gallery"], ["wishlist", "Wishlist"], ["members", "Members"], ["about", "About"]];
   let body = "";
   if (profileTab === "home") body = `<div class="home-stack">
-    ${c.goal ? goalCard(c) : ""}
-    <div class="home-posts">${(c.posts || []).slice(0, 2).map((p, i) => postCard(c, p, i)).join("")}</div>
-    <div class="pro-block"><div class="h"><b>Shop</b><a href="#/creator/${c.handle}/shop">All</a></div><div class="shop-grid compact">${(c.shop || []).slice(0, 3).map((s) => shopItem(c, s)).join("")}</div></div>
-    <div class="pro-block"><div class="h"><b>Gallery</b><a href="#/creator/${c.handle}/gallery">All</a></div>${galleryGrid({ ...c, gallery: (c.gallery || []).slice(0, 6) })}</div>
+    ${c.goal ? goalCard(c, true) : ""}
+    <div class="home-posts">${(c.posts || []).slice(0, 2).map((p, i) => postCard(c, p, i, { onProfile: true })).join("")}</div>
+    <div class="pro-block"><div class="h"><b>Shop</b><a href="#/creator/${c.handle}/shop">All</a></div><div class="shop-grid compact">${(c.shop || []).slice(0, 4).map((s) => shopItem(c, s)).join("")}</div></div>
+    <div class="pro-block gallery-block"><div class="h"><b>Gallery</b><a href="#/creator/${c.handle}/gallery">View all ${I.arrow}</a></div>${galleryGrid(c, { preview: true })}</div>
   </div>`;
-  else if (profileTab === "posts") body = `<div class="feed-col">${(c.posts || []).length ? c.posts.map((p, i) => postCard(c, p, i)).join("") : `<div class="empty">No posts yet.</div>`}</div>`;
+  else if (profileTab === "posts") body = `<div class="feed-col">${(c.posts || []).length ? c.posts.map((p, i) => postCard(c, p, i, { onProfile: true })).join("") : `<div class="empty">No posts yet.</div>`}</div>`;
   else if (profileTab === "shop") body = shopTab(c);
   else if (profileTab === "gallery") body = galleryGrid(c);
   else if (profileTab === "wishlist") body = `<div class="wish-grid">${open.map((w) => wishCard(c, w)).join("")}${done.map((w) => wishCard(c, w)).join("")}</div>`;
@@ -640,11 +701,11 @@ function pageCreator(handle, tab) {
       <div class="step"><h3>Badges</h3>${badgeRow(badgeState(CREATOR_BADGES, c), { all: true })}</div>
     </div>`;
   const rail = `<aside class="pro-rail">${coffeeCard(c)}${membersTeaser(c)}
-    <div class="rail-block"><span class="h">Top supporters</span>${(c.boosts || []).map((b) => `<div class="sug"><div class="who"><span class="avatar" style="width:36px;height:36px;display:grid;place-items:center;color:var(--accent);border-width:0;background:var(--blush)">${I.cup}</span><div><b style="font-size:14px">${esc(b.from)}</b><small>${money(b.amount)} · ${b.when}</small></div></div></div>`).join("") || `<span class="muted" style="font-size:14px">Be the first coffee.</span>`}<a href="#/creator/${c.handle}/about" style="font-weight:700;font-size:13px">See leaderboard</a></div>
-    <div class="rail-block"><span class="h">Open wishes</span>${open.slice(0, 3).map((w) => `<div class="wl-row" style="padding:10px"><div class="thumb" style="${thumbStyle(c.tint)}">${ITEM_ICON[w.icon]}</div><div class="info"><b style="font-size:14px">${esc(w.title)}</b><small>${money(w.price)}</small></div><a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">Gift</a></div>`).join("")}<a href="#/creator/${c.handle}/wishlist" style="font-weight:700;font-size:13px">Wishlist</a></div></aside>`;
+    <div class="rail-block"><span class="h">Top supporters</span>${(c.boosts || []).slice(0, 2).map((b) => `<div class="sug"><div class="who"><span class="avatar" style="width:32px;height:32px;display:grid;place-items:center;color:var(--accent);border-width:0;background:var(--blush)">${I.cup}</span><div><b style="font-size:13px">${esc(b.from)}</b><small>${money(b.amount)} · ${b.when}</small></div></div></div>`).join("") || `<span class="muted" style="font-size:13px">Be the first coffee.</span>`}<a href="#/creator/${c.handle}/about" style="font-weight:600;font-size:12px">See leaderboard</a></div>
+    <div class="rail-block"><span class="h">Open wishes</span>${open.slice(0, 2).map((w) => `<div class="wl-row" style="padding:6px"><div class="thumb" style="${thumbStyle(c.tint)}">${ITEM_ICON[w.icon]}</div><div class="info"><b style="font-size:13px">${esc(w.title)}</b><small>${money(w.price)}</small></div><a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">Gift</a></div>`).join("")}<a href="#/creator/${c.handle}/wishlist" style="font-weight:600;font-size:12px">Wishlist</a></div></aside>`;
   return marketingPage("explore", `<div class="wrap pro-page" style="${themeVars(c)}">${creatorHeader(c)}
-    <div class="tabs">${tabs.map(([t, l]) => `<a href="#/creator/${c.handle}/${t}" class="${profileTab === t ? "on" : ""}">${l}</a>`).join("")}</div>
-    <div class="pro-layout"><div class="pro-main">${body}</div>${rail}</div></div>`);
+    <div class="tabs tab-seek">${tabs.map(([t, l]) => `<a href="#/creator/${c.handle}/${t}" class="${profileTab === t ? "on" : ""}">${l}</a>`).join("")}</div>
+    <div class="pro-layout"><div class="pro-main">${body}</div>${rail}</div></div>`, { scene: true });
 }
 
 /* ---------- Page editor ---------- */
@@ -696,15 +757,15 @@ function sentCard(s) {
   return `<div class="sent"><div class="top"><a href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""></a><div><b>${esc(s.item)}</b><small>to ${esc(c.name)} · ${s.when} · ${s.anon ? "anonymous" : "signed @" + state.supporter.handle}</small></div><span class="amt">${money(s.amount)}</span></div>
     <div class="timeline">${steps.map((st, i) => `${i ? `<span class="bar ${i <= s.step ? "done" : ""}"></span>` : ""}<span class="${i < s.step ? "done" : i === s.step ? "now" : ""}">${st}</span>`).join("")}</div>
     ${s.msg ? `<div class="note">"${esc(s.msg)}"</div>` : ""}
-    <div style="display:flex;gap:10px;align-items:center;font-size:13px">${s.thanked ? `<span class="badge good">Thanked you</span><a href="#/creator/${c.handle}/thanks">See thank-you</a>` : `<span class="muted">No thank-you yet</span>`}${isShop ? `<a href="#/account/library" style="margin-left:auto;font-weight:700">${I.library.replace("<svg", '<svg style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"')}Open in library</a>` : `<a href="#/creator/${c.handle}" style="margin-left:auto;font-weight:700">${isBoost ? "Boost again" : "Send another"}</a>`}</div></div>`;
+    <div style="display:flex;gap:10px;align-items:center;font-size:13px">${s.thanked ? `<span class="badge good">Thanked you</span><a href="#/creator/${c.handle}/thanks">See thank-you</a>` : `<span class="muted">No thank-you yet</span>`}${isShop ? `<a href="#/account/library" style="margin-left:auto;font-weight:600">${I.library.replace("<svg", '<svg style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"')}Open in library</a>` : `<a href="#/creator/${c.handle}" style="margin-left:auto;font-weight:600">${isBoost ? "Boost again" : "Send another"}</a>`}</div></div>`;
 }
 function pageAccount() {
   const s = state.supporter; const total = s.sent.reduce((a, b) => a + b.amount, 0);
   return appShell("account", `<div class="main-head"><div><span class="eyebrow" style="color:var(--violet)">Supporter</span><h2>Hi, ${esc(s.name)}</h2></div><a class="btn btn-violet" href="#/explore">${I.gift}<span>Send a gift</span></a></div>
   <div class="tiles"><div class="tile"><span>Gifts &amp; boosts sent</span><b>${s.sent.length}</b><small>to ${new Set(s.sent.map((x) => x.to)).size} creators</small></div><div class="tile"><span>Total given</span><b>${money(total)}</b><small>100% went to creators</small></div><div class="tile"><span>On the way</span><b>${s.sent.filter((x) => x.step < 2 && x.kind === "gift").length}</b><small style="color:var(--violet)">Track below</small></div><div class="tile"><span>Following</span><b>${state.following.size}</b><small>${s.saved.size} saved wishes</small></div></div>
   <div class="two-col">
-    <div style="display:flex;flex-direction:column;gap:14px"><div class="main-head"><h3 style="font-family:var(--sans);font-weight:700;font-size:18px">Recent</h3><a href="#/account/gifts" style="font-weight:700;font-size:14px">See all</a></div><div class="list">${s.sent.slice(0, 2).map(sentCard).join("")}</div></div>
-    <aside class="rail"><span class="h">Your badges</span>${badgeRow(badgeState(SUPPORTER_BADGES, state.supporter), { all: true })}<a href="#/account/badges" style="font-weight:700;font-size:14px">See all badges</a><span class="h" style="margin-top:8px">Saved wishes</span>${[...s.saved].slice(0, 3).map((id) => { const c = creators.find((cc) => cc.wishlist.some((w) => w.id === id)); const w = c && c.wishlist.find((w) => w.id === id); return w ? `<div class="wl-row" style="padding:10px"><div class="thumb" style="${thumbStyle(c.tint)}">${ITEM_ICON[w.icon]}</div><div class="info"><b style="font-size:14px">${esc(w.title)}</b><small>${esc(c.name)} · ${money(w.price)}</small></div><a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">Gift</a></div>` : ""; }).join("") || `<span class="muted">Nothing saved yet.</span>`}<a href="#/account/saved" style="font-weight:700;font-size:14px">All saved</a>
+    <div style="display:flex;flex-direction:column;gap:14px"><div class="main-head"><h3 style="font-family:var(--sans);font-weight:600;font-size:18px">Recent</h3><a href="#/account/gifts" style="font-weight:600;font-size:14px">See all</a></div><div class="list">${s.sent.slice(0, 2).map(sentCard).join("")}</div></div>
+    <aside class="rail"><span class="h">Your badges</span>${badgeRow(badgeState(SUPPORTER_BADGES, state.supporter), { all: true })}<a href="#/account/badges" style="font-weight:600;font-size:14px">See all badges</a><span class="h" style="margin-top:8px">Saved wishes</span>${[...s.saved].slice(0, 3).map((id) => { const c = creators.find((cc) => cc.wishlist.some((w) => w.id === id)); const w = c && c.wishlist.find((w) => w.id === id); return w ? `<div class="wl-row" style="padding:10px"><div class="thumb" style="${thumbStyle(c.tint)}">${ITEM_ICON[w.icon]}</div><div class="info"><b style="font-size:14px">${esc(w.title)}</b><small>${esc(c.name)} · ${money(w.price)}</small></div><a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">Gift</a></div>` : ""; }).join("") || `<span class="muted">Nothing saved yet.</span>`}<a href="#/account/saved" style="font-weight:600;font-size:14px">All saved</a>
       <span class="h" style="margin-top:8px">Your privacy</span><div class="note">${I.mask}<span>Gifts default to <b>${s.anonDefault ? "anonymous" : "signed"}</b>. Creators never see your card or address.</span></div></aside>
   </div>`);
 }
@@ -766,9 +827,9 @@ function shopTab(c) {
   const items = c.shop || [];
   return `<div style="display:flex;flex-direction:column;gap:24px">${commissionCard(c)}${items.length ? `<div class="shop-grid">${items.map((s) => shopItem(c, s)).join("")}</div>` : `<div class="empty">${esc(c.name)} hasn't opened a shop yet.</div>`}<div class="note">${I.yen}<span>Shop sales and commission deposits go to ${esc(c.name.split(" ")[0])} at 0% platform cut — only card processing is deducted.</span></div></div>`;
 }
-function goalCard(c) {
+function goalCard(c, compact) {
   const g = c.goal, pct = Math.min(100, Math.round((g.raised / g.target) * 100));
-  return `<div class="goal-card"><div style="display:flex;justify-content:space-between;align-items:center"><span class="badge violet">Goal</span><span class="muted" style="font-size:13px">${pct}% funded</span></div><h3>${esc(g.title)}</h3><p class="muted" style="font-size:14px">${esc(g.desc)}</p><div class="progress"><i style="width:${pct}%"></i></div><div class="pr"><span>${money(g.raised)} raised</span><span>${money(g.target)} goal</span></div>${g.unlock ? `<div class="unlock"><div class="ic">${I.unlock}</div><span><b>Community unlock:</b> ${esc(g.unlock)}</span></div>` : ""}${c.handle === state.user.handle ? "" : `<a class="btn btn-violet" style="align-self:flex-start" href="#/boost/${c.handle}?goal=1">Chip in</a>`}</div>`;
+  return `<div class="goal-card${compact ? " compact" : ""}"><div class="goal-top"><span class="badge violet">Goal</span><h3>${esc(g.title)}</h3><span class="muted">${pct}%</span></div>${compact ? "" : `<p class="muted" style="font-size:14px">${esc(g.desc)}</p>`}<div class="progress"><i style="width:${pct}%"></i></div><div class="pr"><span>${money(g.raised)}</span><span>${money(g.target)}</span></div>${!compact && g.unlock ? `<div class="unlock"><div class="ic">${I.unlock}</div><span><b>Community unlock:</b> ${esc(g.unlock)}</span></div>` : ""}${compact || c.handle === state.user.handle ? "" : `<a class="btn btn-violet btn-sm" style="align-self:flex-start" href="#/boost/${c.handle}?goal=1">Chip in</a>`}</div>`;
 }
 const bo = { amount: 10, msg: "", anon: false, goal: false };
 function pageBoost(handle, goal) {
@@ -844,7 +905,7 @@ function pageThanks(handle) {
 const ob = { role: "supporter", interests: new Set(["Art", "Cosplay"]), step: 1 };
 function pageLogin() {
   return `<div class="page"><div class="auth"><a class="brand" href="#/">${I.cat}<span>Baka<span class="bb">Boost</span></span></a>
-    <div class="card"><h3 style="font-family:var(--serif);font-weight:400;font-size:30px">Welcome back</h3>
+    <div class="card"><h3 style="font-family:var(--sans);font-weight:700;font-size:30px">Welcome back</h3>
       <div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div>
       <div class="field"><label>Password</label><input type="password" placeholder="••••••••"><span class="hint"><a href="#/login">Forgot it?</a></span></div>
       <button class="btn btn-primary btn-block" data-act="login">Log in</button>
@@ -855,19 +916,19 @@ function pageLogin() {
 }
 function pageSignup() {
   let body;
-  if (ob.step === 1) body = `<div class="card"><h3 style="font-family:var(--serif);font-weight:400;font-size:30px">Create your account</h3>
+  if (ob.step === 1) body = `<div class="card"><h3 style="font-family:var(--sans);font-weight:700;font-size:30px">Create your account</h3>
       <div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div>
       <div class="field"><label>Handle</label><input placeholder="@yourhandle"><span class="hint">This becomes your page: bakaboost.app/yourhandle</span></div>
       <div class="field"><label>Password</label><input type="password" placeholder="At least 8 characters"></div>
       <button class="btn btn-primary btn-block" data-act="ob-next">Continue</button>
       <p class="muted" style="text-align:center;font-size:14px">Already have one? <a href="#/login">Log in</a></p></div>`;
-  else if (ob.step === 2) body = `<div class="card"><h3 style="font-family:var(--serif);font-weight:400;font-size:30px">How will you use BakaBoost?</h3>
+  else if (ob.step === 2) body = `<div class="card"><h3 style="font-family:var(--sans);font-weight:700;font-size:30px">How will you use BakaBoost?</h3>
       <div class="roles"><button class="role ${ob.role === "supporter" ? "on" : ""}" data-role="supporter"><b>Supporter</b><span>Discover creators and send gifts.</span></button><button class="role ${ob.role === "creator" ? "on" : ""}" data-role="creator"><b>Creator</b><span>Share a wishlist and receive support.</span></button></div>
       <div><b style="font-size:15px">What are you into?</b><p class="muted" style="font-size:14px">Pick a few. You can change this anytime.</p></div>
       <div class="filters" style="margin:0">${CATS.slice(1).map((c) => `<button class="chip ${ob.interests.has(c) ? "on" : ""}" data-int="${c}">${c}</button>`).join("")}</div>
       <button class="btn btn-primary btn-block" data-act="ob-next">${ob.role === "creator" ? "Set up my wishlist" : "Go to my feed"}</button>
       <button class="btn btn-text" data-act="ob-skip">Skip for now</button></div>`;
-  else body = `<div class="card" style="align-items:center;text-align:center"><div class="thanks-page" style="padding:12px 0 0;gap:14px"><div class="ic">${I.sparkle}</div><h3 style="font-family:var(--serif);font-weight:400;font-size:30px">You're all set</h3><p class="muted">${ob.role === "creator" ? "Your page is live. Add your first wish and share the link." : "Your feed is ready. Go make someone's day."}</p></div>
+  else body = `<div class="card" style="align-items:center;text-align:center"><div class="thanks-page" style="padding:12px 0 0;gap:14px"><div class="ic">${I.sparkle}</div><h3 style="font-family:var(--sans);font-weight:700;font-size:30px">You're all set</h3><p class="muted">${ob.role === "creator" ? "Your page is live. Add your first wish and share the link." : "Your feed is ready. Go make someone's day."}</p></div>
       <a class="btn btn-primary btn-block" href="#/${ob.role === "creator" ? "dashboard/wishlist" : "account"}" data-act="ob-finish">${ob.role === "creator" ? "Add my first wish" : "Go to my feed"}</a></div>`;
   return `<div class="page"><div class="auth"><a class="brand" href="#/">${I.cat}<span>Baka<span class="bb">Boost</span></span></a>${body}</div></div>`;
 }
@@ -884,7 +945,7 @@ function pageFeed() {
   <div class="two-col">
     <div><div class="tabs" style="margin-top:0">${tabs.map(([t, l]) => `<button class="${feedTab === t ? "on" : ""}" data-feed="${t}">${l}</button>`).join("")}</div>
       <div class="feed-col">${list.length ? list.map((x) => postCard(x.c, x.p, x.i)).join("") : `<div class="empty">Nothing here yet. Follow a few creators and this fills up.</div>`}</div></div>
-    <aside class="rail"><span class="h">Suggested creators</span>${sug.map((c) => `<div class="sug"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b>${esc(c.name)}</b><small>@${c.handle}</small></div></a><button class="btn btn-ghost btn-sm" data-follow="${c.handle}">Follow</button></div>`).join("")}<a href="#/explore" style="font-weight:700;font-size:14px">See all</a>
+    <aside class="rail"><span class="h">Suggested creators</span>${sug.map((c) => `<div class="sug"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b>${esc(c.name)}</b><small>@${c.handle}</small></div></a><button class="btn btn-ghost btn-sm" data-follow="${c.handle}">Follow</button></div>`).join("")}<a href="#/explore" style="font-weight:600;font-size:14px">See all</a>
       <div class="card" style="gap:10px;margin-top:8px;background:var(--blush);border:0"><b>Make someone's day</b><p class="muted" style="font-size:14px">Pick a creator and gift one open wish.</p><a class="btn btn-primary btn-sm" href="#/explore">Browse wishes</a></div></aside>
   </div>`);
 }
@@ -897,8 +958,8 @@ function pageDashboard() {
   return appShell("dashboard", `<div class="main-head"><div><span class="eyebrow">Creator dashboard</span><h2>Hi, ${esc(state.user.name.split(" ")[0])}</h2></div><a class="btn btn-ghost" href="#/creator/${state.user.handle}">${I.eye}<span>View my page</span></a></div>
   <div class="tiles"><div class="tile"><span>Gifts this month</span><b class="count" data-count="${state.gifts.length}">${state.gifts.length}</b><small>+3 vs last month</small></div><div class="tile"><span>Value received</span><b>${money(state.gifts.reduce((s, g) => s + g.amount, 0))}</b><small>across ${c.wishlist.filter((w) => w.done).length + 1} wishes</small></div><div class="tile"><span>Awaiting thank-you</span><b>${open.length}</b><small style="color:var(--warn)">${open.length ? "Reply today ♡" : "All caught up"}</small></div><div class="tile"><span>Supporters</span><b>${k(c.followers)}</b><small>+180 this week</small></div></div>
   <div class="two-col">
-    <div style="display:flex;flex-direction:column;gap:14px"><div class="main-head"><h3 style="font-family:var(--sans);font-weight:700;font-size:18px">Recent gifts</h3><a href="#/dashboard/gifts" style="font-weight:700;font-size:14px">See all</a></div>${giftsTable(state.gifts.slice(0, 3))}</div>
-    <aside class="rail"><span class="h">Your badges</span>${badgeRow(badgeState(CREATOR_BADGES, c), { all: true })}<a href="#/dashboard/badges" style="font-weight:700;font-size:14px">See all badges</a>${c.goal ? `<span class="h" style="margin-top:8px">Your goal</span>${goalCard(c)}` : ""}<span class="h">Being funded together</span>${funded || `<div class="empty">No contribute-together wishes yet.</div>`}
+    <div style="display:flex;flex-direction:column;gap:14px"><div class="main-head"><h3 style="font-family:var(--sans);font-weight:600;font-size:18px">Recent gifts</h3><a href="#/dashboard/gifts" style="font-weight:600;font-size:14px">See all</a></div>${giftsTable(state.gifts.slice(0, 3))}</div>
+    <aside class="rail"><span class="h">Your badges</span>${badgeRow(badgeState(CREATOR_BADGES, c), { all: true })}<a href="#/dashboard/badges" style="font-weight:600;font-size:14px">See all badges</a>${c.goal ? `<span class="h" style="margin-top:8px">Your goal</span>${goalCard(c)}` : ""}<span class="h">Being funded together</span>${funded || `<div class="empty">No contribute-together wishes yet.</div>`}
       <span class="h" style="margin-top:8px">Share your page</span><div class="addr">bakaboost.app/${state.user.handle}</div><button class="btn btn-ghost btn-sm" data-act="copy">${I.link}<span>Copy link</span></button></aside>
   </div>`);
 }
@@ -928,7 +989,7 @@ function pageThanksInbox() {
   return appShell("dashboard/thanks", `<div class="main-head"><div><span class="eyebrow">Thank-yous</span><h2>Close the loop</h2></div></div>
   <p class="muted" style="max-width:60ch">A thank-you posts to your page and lands in the supporter's notifications. Anonymous supporters still get it — they just aren't named.</p>
   <div class="list">${pending.length ? pending.map((g) => `<div class="thank-item"><span class="avatar" style="display:grid;place-items:center;color:var(--accent)">${g.anon ? I.mask : I.user}</span><div class="body"><div><b>${g.anon ? "Anonymous" : "@" + esc(g.from)}</b>${g.anon ? "" : `<span class="from-badges">${supporterBadgesFor(g.from).map((b) => badgeIcon(b, "sm")).join("")}</span>`} · ${esc(g.item)} · ${money(g.amount)}<br><small>${g.msg ? '"' + esc(g.msg) + '"' : "No note"} · ${g.when}</small></div><textarea data-thanks-text="${g.id}" placeholder="Thank them. Mention what you'll do with it — that's what they came for."></textarea><div style="display:flex;gap:10px"><button class="btn btn-primary btn-sm" data-thank="${g.id}">${I.heart}<span>Post thank-you</span></button><button class="btn btn-ghost btn-sm" data-thank-later="${g.id}">Later</button></div></div></div>`).join("") : `<div class="empty">Everyone's been thanked. Go make something.</div>`}</div>
-  <h3 style="font-family:var(--sans);font-weight:700;font-size:18px;margin-top:12px">Posted</h3>
+  <h3 style="font-family:var(--sans);font-weight:600;font-size:18px;margin-top:12px">Posted</h3>
   <div class="feed-col">${state.thanks.map((t) => thanksCard(myCreator(), t)).join("")}</div>`);
 }
 function pageSettings() {
@@ -947,10 +1008,17 @@ function pageSettings() {
 /* ---------- Motion enhancer (runs after every render) ---------- */
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let revealObs, barObs, countObs;
+function bindTabSeek(el) {
+  if (el.dataset.seek) return;
+  el.dataset.seek = "1";
+  const active = el.querySelector(".on");
+  if (active) requestAnimationFrame(() => el.scrollTo({ left: Math.max(0, active.offsetLeft - 20), behavior: reduceMotion ? "auto" : "smooth" }));
+}
 function enhance() {
   const root = $("#root");
+  root.querySelectorAll(".pro-page .tabs").forEach(bindTabSeek);
   // mark reveal targets
-  root.querySelectorAll(".section .section-head, .section .steps > *, .section .features > *, .section .creator-grid > *, .section .datalist > *, .section .pagefeel > *, .section .stores > *, .section .faq2 > *, .section .plum, .section .testimonial > *, .section .cta-mid, .platforms > *, .wish-grid > .wish, .tiles > .tile, .badge-grid > *, .list > *").forEach((el, i) => { if (!el.classList.contains("rv")) { el.classList.add("rv"); const sib = [...el.parentElement.children].indexOf(el); el.classList.add("d" + Math.min(sib, 7)); } });
+  root.querySelectorAll(".section .section-head, .section .steps > *, .section .features > *, .section .datalist > *, .section .pagefeel > *, .section .stores > *, .section .faq2 > *, .section .plum, .section .testimonial > *, .section .cta-mid, .platforms > *, .wish-grid > .wish, .tiles > .tile, .badge-grid > *, .list > *").forEach((el, i) => { if (!el.classList.contains("rv")) { el.classList.add("rv"); const sib = [...el.parentElement.children].indexOf(el); el.classList.add("d" + Math.min(sib, 7)); } });
   if (reduceMotion) { root.querySelectorAll(".progress").forEach((p) => p.classList.remove("pending")); return; }
   // scroll reveal
   revealObs = revealObs || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); revealObs.unobserve(e.target); } }), { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
@@ -959,13 +1027,12 @@ function enhance() {
   barObs = barObs || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { requestAnimationFrame(() => e.target.classList.remove("pending")); barObs.unobserve(e.target); } }), { threshold: 0.4 });
   root.querySelectorAll(".progress").forEach((p) => { if (p.dataset.seen) return; p.dataset.seen = 1; p.classList.add("pending"); barObs.observe(p); });
   // count-ups
-  countObs = countObs || new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; countObs.unobserve(e.target); const el = e.target, end = Number(el.dataset.count), suf = el.dataset.suffix || "", t0 = performance.now(), dur = 1400; const step = (t) => { const p = Math.min(1, (t - t0) / dur), v = Math.round(end * (1 - Math.pow(1 - p, 3))); el.textContent = v.toLocaleString() + suf; if (p < 1) requestAnimationFrame(step); else el.classList.add("done"); }; requestAnimationFrame(step); }), { threshold: 0.6 });
+  countObs = countObs || new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; countObs.unobserve(e.target); const el = e.target, end = Number(el.dataset.count), suf = el.dataset.suffix || "", t0 = performance.now(), dur = 2400; const step = (t) => { const p = Math.min(1, (t - t0) / dur), v = Math.round(end * (1 - Math.pow(1 - p, 3))); el.textContent = v.toLocaleString() + suf; if (p < 1) requestAnimationFrame(step); else el.classList.add("done"); }; requestAnimationFrame(step); }), { threshold: 0.6 });
   root.querySelectorAll(".count[data-count]").forEach((el) => { if (el.dataset.seen) return; el.dataset.seen = 1; countObs.observe(el); });
   // parallax on hero stage
   const stage = root.querySelector(".hero4 .stage");
   if (stage) { const cards = [...stage.querySelectorAll(".fc")]; const orb = stage.querySelector(".orb"); stage.parentElement.addEventListener("mousemove", (e) => { const r = stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5; cards.forEach((c, i) => { const d = 10 + i * 6; c.style.transform = `translate(${x * d}px, ${y * d}px)`; }); if (orb) orb.style.transform = `translateX(-50%) translate(${x * -6}px, ${y * -6}px)`; }, { passive: true }); stage.parentElement.addEventListener("mouseleave", () => { cards.forEach((c) => (c.style.transform = "")); if (orb) orb.style.transform = ""; }); }
-  // 3D tilt
-  if (!matchMedia("(pointer: coarse)").matches) root.querySelectorAll(".tilt").forEach((el) => { el.addEventListener("mousemove", (e) => { const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5; el.style.transform = `perspective(900px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateY(-4px)`; }); el.addEventListener("mouseleave", () => (el.style.transform = "")); });
+  // Explore cards use CSS 3D hover only — mouse-follow tilt was fighting other transforms and vibrating.
   // live notification card
   clearInterval(liveTimer); const live = root.querySelector(".fc.boost .swap");
   if (live) liveTimer = setInterval(() => { liveIdx = (liveIdx + 1) % LIVE_NOTES.length; const [a, b] = LIVE_NOTES[liveIdx]; const n = live.cloneNode(false); n.innerHTML = `<b>${a}</b><small>${b}</small>`; live.replaceWith(n); root.querySelector(".fc.boost .swap") || 0; enhanceLive(n); }, 3400);
@@ -993,18 +1060,18 @@ function heartBurst(x, y, color) {
   const b = document.createElement("div"); b.className = "burst"; b.style.left = x + "px"; b.style.top = y + "px";
   const heart = '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
   for (let i = 0; i < 10; i++) { const a = (Math.PI * 2 * i) / 10 + Math.random() * 0.5, d = 40 + Math.random() * 40; const s = document.createElement("i"); s.style.setProperty("--dx", Math.cos(a) * d + "px"); s.style.setProperty("--dy", Math.sin(a) * d - 20 + "px"); s.style.setProperty("--r", (Math.random() * 60 - 30) + "deg"); s.style.animationDelay = (Math.random() * 0.1) + "s"; if (color) s.style.color = color; s.innerHTML = heart; b.appendChild(s); }
-  document.body.appendChild(b); setTimeout(() => b.remove(), 1100);
+  document.body.appendChild(b); setTimeout(() => b.remove(), 1600);
 }
 function confetti() {
   if (reduceMotion) return;
   const c = document.createElement("canvas"); c.className = "confetti"; document.body.appendChild(c); const ctx = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
-  const cols = ["#e9498b", "#6f55e3", "#ffb3d1", "#c9bdf5", "#ffd27f"]; const ps = Array.from({ length: 90 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * 0.5, r: 4 + Math.random() * 5, vy: 2 + Math.random() * 3, vx: Math.random() * 2 - 1, rot: Math.random() * 6, vr: Math.random() * 0.2 - 0.1, col: cols[Math.floor(Math.random() * cols.length)], heart: Math.random() < 0.4 }));
+  const cols = ["#e9498b", "#6f55e3", "#ffb3d1", "#c9bdf5", "#ffd27f"]; const ps = Array.from({ length: 90 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * 0.5, r: 4 + Math.random() * 5, vy: 1.15 + Math.random() * 1.8, vx: Math.random() * 1.2 - 0.6, rot: Math.random() * 6, vr: Math.random() * 0.12 - 0.06, col: cols[Math.floor(Math.random() * cols.length)], heart: Math.random() < 0.4 }));
   let t0 = performance.now();
-  (function frame(t) { ctx.clearRect(0, 0, c.width, c.height); ps.forEach((p) => { p.y += p.vy; p.x += p.vx + Math.sin(t / 400 + p.r) * 0.6; p.rot += p.vr; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.col; if (p.heart) { ctx.beginPath(); ctx.moveTo(0, p.r); ctx.bezierCurveTo(-p.r * 1.4, -p.r * 0.2, -p.r * 0.5, -p.r * 1.2, 0, -p.r * 0.4); ctx.bezierCurveTo(p.r * 0.5, -p.r * 1.2, p.r * 1.4, -p.r * 0.2, 0, p.r); ctx.fill(); } else ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6); ctx.restore(); }); if (t - t0 < 3200) requestAnimationFrame(frame); else c.remove(); })(t0);
+  (function frame(t) { ctx.clearRect(0, 0, c.width, c.height); ps.forEach((p) => { p.y += p.vy; p.x += p.vx + Math.sin(t / 520 + p.r) * 0.55; p.rot += p.vr; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.col; if (p.heart) { ctx.beginPath(); ctx.moveTo(0, p.r); ctx.bezierCurveTo(-p.r * 1.4, -p.r * 0.2, -p.r * 0.5, -p.r * 1.2, 0, -p.r * 0.4); ctx.bezierCurveTo(p.r * 0.5, -p.r * 1.2, p.r * 1.4, -p.r * 0.2, 0, p.r); ctx.fill(); } else ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6); ctx.restore(); }); if (t - t0 < 5200) requestAnimationFrame(frame); else c.remove(); })(t0);
 }
 document.addEventListener("pointerdown", (e) => {
   const b = e.target.closest(".btn"); if (!b || reduceMotion) return;
-  const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height); const i = document.createElement("span"); i.className = "ripple"; i.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`; b.appendChild(i); setTimeout(() => i.remove(), 650);
+  const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height); const i = document.createElement("span"); i.className = "ripple"; i.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`; b.appendChild(i); setTimeout(() => i.remove(), 1050);
 });
 document.addEventListener("click", (e) => {
   const like = e.target.closest("[data-like]"); if (like && !state.liked.has(like.dataset.like)) heartBurst(e.clientX, e.clientY);
@@ -1042,7 +1109,7 @@ function scrollSetup(root) {
   // direction classes → reveal variants
   root.querySelectorAll(".from-left, .from-right, .mask").forEach((el) => el.classList.add("rv"));
   root.querySelectorAll(".features > .feat").forEach((el, i) => el.classList.add(i % 2 ? "flip" : "scale"));
-  root.querySelectorAll(".creator-grid > .ccard").forEach((el, i) => el.classList.add(["from-left", "scale", "from-right"][i % 3]));
+  // skip 3D flip-ins on explore cards — they jitter against hover lift
   root.querySelectorAll(".steps > .step").forEach((el) => el.classList.add("rot"));
   root.querySelectorAll(".faq2 > details").forEach((el, i) => el.classList.add(i % 2 ? "from-right" : "from-left"));
   // section dots + back to top
@@ -1139,6 +1206,7 @@ document.addEventListener("click", (e) => {
   if (d.tint) { readEditor(); myCreator().tint = Number(d.tint); route(); return; }
   if (d.act === "add-link") { readEditor(); (myCreator().links = myCreator().links || []).push(""); route(); return; }
   if (d.act === "save-page") { readEditor(); toast("Page saved ♡"); route(); return; }
+  if (d.act === "add-gallery") { toast("Add photos from Edit page — they land in Gallery"); return; }
   if (d.ssetting) { if (d.ssetting === "anonDefault") state.supporter.anonDefault = !state.supporter.anonDefault; t.classList.toggle("on"); return; }
   if (d.act === "save-supporter") { state.supporter.name = $("#sa-name").value.trim() || state.supporter.name; state.supporter.bio = $("#sa-bio").value.trim(); toast("Saved"); route(); return; }
   if (d.bamt) { bo.amount = Number(d.bamt); route(); return; }
