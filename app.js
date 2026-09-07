@@ -83,19 +83,26 @@ const creators = [
     ],
     goal: { title: "New art setup", target: 1200, raised: 985, desc: "Pen display, proper lighting, and headphones that aren't gaming cans.", unlock: "Night Drop wallpaper set for everyone who chipped in" },
     shop: [
-      { id: "s1", title: "Coquette Phone Portrait", kind: "Wallpaper · PNG", price: 8.99, icon: "image" },
-      { id: "s2", title: "Sticker Pack Vol.1", kind: "12 stickers · PNG", price: 4.99, icon: "sticker" },
-      { id: "s3", title: "Desktop Wallpaper Set", kind: "4K · 6 files", price: 7.99, icon: "monitor" },
-      { id: "s4", title: "After Dark Set", kind: "18+ · PNG", price: 12, icon: "image", adult: true },
-      { id: "s5", title: "Brush Pack: Soft Inks", kind: "Procreate", price: 6, icon: "brush" },
-      { id: "s6", title: "Process Video: OC Redesign", kind: "MP4 · 42 min", price: 5, icon: "camera" },
+      { id: "s1", title: "Coquette Phone Portrait", kind: "Wallpaper · PNG", price: 8.99, icon: "image", img: IMG.hero },
+      { id: "s2", title: "Sticker Pack Vol.1", kind: "12 stickers · PNG", price: 4.99, icon: "sticker", img: IMG.post1 },
+      { id: "s3", title: "Desktop Wallpaper Set", kind: "4K · 6 files", price: 7.99, icon: "monitor", img: IMG.hero },
+      { id: "s4", title: "After Dark Set", kind: "18+ · PNG", price: 12, icon: "image", adult: true, img: IMG.av1 },
+      { id: "s5", title: "Brush Pack: Soft Inks", kind: "Procreate", price: 6, icon: "brush", img: IMG.post1 },
+      { id: "s6", title: "Process Video: OC Redesign", kind: "MP4 · 42 min", price: 5, icon: "camera", img: IMG.hero },
     ],
     commissions: { open: true, slots: 5, taken: 3, from: 45, deposit: 50, turnaround: "2–3 weeks", tiers: ["Bust · $45", "Half body · $80", "Full body · $140"] },
-    boosts: [{ from: "Mika", amount: 15, msg: "Keep creating!", when: "1h" }, { from: "Anonymous", amount: 5, msg: "for coffee ♡", when: "4h" }],
+    members: [
+      { id: "tier-coffee", name: "Coffee club", price: 3, perks: ["Supporter badge", "Name on the thank-you wall"], live: true },
+      { id: "tier-inner", name: "Inner circle", price: 8, perks: ["Early posts", "Monthly wallpaper drop"], live: true },
+      { id: "tier-studio", name: "Studio lounge", price: 18, perks: ["Custom domain look", "Collab seats", "Priority relay"], live: false, premium: true },
+    ],
+    boosts: [{ from: "Mika", amount: 15, msg: "Keep creating!", when: "1h" }, { from: "Anonymous", amount: 5, msg: "for coffee ♡", when: "4h" }, { from: "pixel_rin", amount: 25, msg: "for the new setup", when: "1d" }],
     posts: [
       { text: "new setup ♡ what do you think?", img: IMG.post1, likes: 1200, comments: 84, reposts: 32, when: "2h", tag: "IRL" },
-      { text: "Warm-up sketches from tonight's stream. Thank you for keeping me company!", likes: 860, comments: 41, reposts: 12, when: "1d" },
+      { text: "Warm-up sketches from tonight's stream. Thank you for keeping me company!", img: IMG.hero, likes: 860, comments: 41, reposts: 12, when: "1d", tag: "Art" },
+      { text: "Sticker pack vol.1 is live in the shop — instant download, 0% platform cut.", img: IMG.post1, likes: 540, comments: 29, reposts: 18, when: "3d", tag: "Shop" },
     ],
+    gallery: [IMG.hero, IMG.post1, IMG.av1, IMG.hero, IMG.post1, IMG.av2],
   },
   { handle: "nekochii", name: "NekoChii", tagline: "Cosplayer", theme: { accent: "violet" }, links: ["instagram.com/nekochii"], verified: true, avatar: IMG.av2, tint: 1, cats: ["Cosplay", "IRL"], bio: "Cosplayer, hoodie collector, chronic con-goer. Wishlist = next build materials.", followers: 8900, gifts: 204, location: "Osaka",
     wishlist: [
@@ -298,6 +305,7 @@ function pageHome() {
       <span class="pill"><span class="dot"></span>Free for creators · 0% platform cut</span>
       <h1>${["Share", "your", "passion,"].map((w, i) => `<span class="w" style="animation-delay:${.1 + i * .08}s">${w}</span>`).join(" ")}<br><span class="em">${["earn", "their", "hearts."].map((w, i) => `<span class="w" style="animation-delay:${.34 + i * .08}s">${w}</span>`).join(" ")}</span></h1>
       <p class="lede">Shop, commissions, wishlist &amp; gifts — built for anime artists, VTubers &amp; illustrators. <b>Stay private. Keep every yen.</b></p>
+      <div class="hero-ctas"><a class="btn btn-primary btn-lg" href="#/creator/lunaaoki">See a creator page</a><a class="btn btn-ghost btn-lg" href="#/how">How it works</a></div>
       <div class="split">
         <div class="pane spot"><div class="txt"><span class="badge" style="align-self:flex-start">★ For creators</span><h2>Create your page</h2><p>Open a shop, wishlist &amp; commission slots. Fans boost you — you keep 100%.</p></div><a class="btn btn-primary" href="#/signup"><span>Start your page</span>${I.arrow}</a><div class="art"><img src="${IMG.hero}" alt=""></div></div>
         <div class="pane spot"><div class="txt"><span class="badge violet" style="align-self:flex-start">♥ For supporters</span><h2>Support a creator</h2><p>Send an anonymous boost, gift a wish, or buy digital art — private &amp; secure.</p></div><a class="btn btn-violet" href="#/explore"><span>Explore creators</span>${I.arrow}</a><div class="art">${envelopeArt()}</div></div>
@@ -568,43 +576,72 @@ function starField() { const pts = [[62,18],[70,62],[78,30],[88,70],[93,22],[55,
 function creatorHeader(c, opts = {}) {
   const isMe = c.handle === state.user.handle && state.role === "creator";
   const open = c.wishlist.filter((w) => !w.done);
-  const pct = c.goal ? Math.min(100, Math.round((c.goal.raised / c.goal.target) * 100)) : 0;
-  return `<div class="cp-head" style="${themeVars(c)}">
-    <div class="cp-banner" style="${thumbStyle(c.tint)}"><img src="${IMG.hero}" alt="">${starField()}</div>
-    <div class="cp-body">
-      <div class="cp-id"><img class="avatar" src="${c.avatar}" alt=""><div class="name"><b>${esc(c.name)}${c.verified ? I.verified : ""}</b><span class="tagrow"><span class="badge">Creator</span>${esc(c.tagline || "")}</span><span class="muted" style="font-size:13px">@${c.handle}</span></div>
-        <div class="acts">${opts.preview ? "" : isMe ? `<a class="btn btn-ghost" href="#/dashboard/page">${I.palette}<span>Edit page</span></a>` : `<button class="btn btn-ghost" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button><a class="btn btn-primary" href="#/creator/${c.handle}/wishlist">${I.gift}<span>Send a gift</span></a>`}</div></div>
-      ${c.goal ? `<div class="cp-side"><div class="h"><span>Community support</span><b>${pct}%</b></div><div class="progress"><i style="width:${pct}%"></i></div><small>Goal: ${esc(c.goal.title)} · ${money(c.goal.raised)} of ${money(c.goal.target)}</small>${isMe || opts.preview ? "" : `<a class="btn btn-primary btn-sm" style="align-self:flex-start" href="#/boost/${c.handle}?goal=1">Chip in</a>`}</div>` : ""}
+  return `<div class="pro-head">
+    <div class="pro-banner" style="${thumbStyle(c.tint)}"><img src="${c.gallery && c.gallery[0] ? c.gallery[0] : IMG.hero}" alt="">${starField()}</div>
+    <div class="pro-id">
+      <img class="avatar" src="${c.avatar}" alt="">
+      <div class="pro-name">
+        <b>${esc(c.name)}${c.verified ? I.verified : ""}</b>
+        <span class="muted">@${c.handle} · ${esc(c.tagline || "Creator")}</span>
+        <div class="pro-stats"><span><b>${k(c.followers)}</b> supporters</span><span><b>${c.gifts}</b> gifts</span><span><b>${open.length}</b> wishes</span><span>${esc(c.location || "")}</span></div>
+      </div>
+      <div class="pro-acts">${opts.preview ? "" : isMe ? `<a class="btn btn-ghost" href="#/dashboard/page">${I.palette}<span>Edit page</span></a>` : `<button class="btn btn-ghost" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button><a class="btn btn-primary" href="#/boost/${c.handle}">${I.cup}<span>Buy a coffee</span></a>`}</div>
     </div>
-    <p class="cp-bio">${esc(c.bio)}</p>
-    <div style="padding:14px 28px 0">${badgeRow(badgeState(CREATOR_BADGES, c), { more: `#/creator/${c.handle}/about` })}</div>
-    <div class="cp-meta"><span><b>${k(c.followers)}</b> supporters</span><span><b>${c.gifts}</b> gifts received</span><span><b>${open.length}</b> open wishes</span><span>${esc(c.location)}</span>${(c.links || []).map((l) => `<a href="#/creator/${c.handle}">${I.link}${esc(l)}</a>`).join("")}</div>
+    <p class="pro-bio">${esc(c.bio)}</p>
+    <div class="pro-links">${(c.links || []).map((l) => `<a href="#/creator/${c.handle}">${I.link}${esc(l)}</a>`).join("")}<a href="#/creator/${c.handle}">bakaboost.com/${c.handle}</a></div>
   </div>`;
+}
+function coffeeCard(c) {
+  if (c.handle === state.user.handle && state.role === "creator") return "";
+  return `<div class="coffee-card">
+    <div class="ic">${I.cup}</div>
+    <b>Buy ${esc(c.name.split(" ")[0])} a coffee</b>
+    <p>One-time tip. No shipping, nothing to unbox. They keep 100%.</p>
+    <div class="amounts">${[1, 3, 5, 10].map((a) => `<button class="chip" data-coffee="${a}" data-ch="${c.handle}">${a === 1 ? "1 coffee" : a + " coffees"} · ${money(a)}</button>`).join("")}</div>
+    <a class="btn btn-primary btn-block" href="#/boost/${c.handle}">Send a boost</a>
+  </div>`;
+}
+function membersTeaser(c) {
+  const tiers = c.members || [{ id: "soon", name: "Memberships", price: 5, perks: ["Exclusive posts", "Member badge"], live: false, premium: true }];
+  return `<div class="members-card">
+    <div class="h"><span>Memberships</span><span class="badge violet">Premium slot</span></div>
+    ${tiers.map((t) => `<div class="tier ${t.live ? "" : "soon"}"><div><b>${esc(t.name)}</b><small>${t.perks.join(" · ")}</small></div><span>${t.live ? money(t.price) + "/mo" : "Soon"}</span></div>`).join("")}
+    <p class="muted" style="font-size:12px">Paid clubs, custom domains, and collab seats stay reserved for Studio — free pages keep shop, posts, and gifts.</p>
+  </div>`;
+}
+function galleryGrid(c) {
+  const pics = c.gallery || (c.posts || []).filter((p) => p.img).map((p) => p.img);
+  if (!pics.length) return `<div class="empty">No gallery yet — posts with photos land here.</div>`;
+  return `<div class="gal">${pics.map((src, i) => `<button class="gal-item" data-act="noop"><img src="${src}" alt="" style="object-position:${(i % 3) * 30}% ${(i % 2) * 40}%"></button>`).join("")}</div>`;
 }
 function pageCreator(handle, tab) {
   const c = findCreator(handle); if (!c) return marketingPage("", `<div class="wrap"><div class="empty" style="margin:60px 0">That creator doesn't exist (yet).</div></div>`);
   profileTab = tab || "home";
   const isMe = c.handle === state.user.handle && state.role === "creator";
   const open = c.wishlist.filter((w) => !w.done), done = c.wishlist.filter((w) => w.done);
+  const tabs = [["home", "Home"], ["posts", "Posts"], ["shop", "Shop"], ["gallery", "Gallery"], ["wishlist", "Wishlist"], ["members", "Members"], ["about", "About"]];
   let body = "";
-  const boostBox = isMe ? "" : `<div class="boost-box"><div class="ic">${I.zap}</div><div><b>Send a boost</b><small>A few dollars and a note. No address, no shipping.</small></div><a class="btn btn-violet btn-sm" href="#/boost/${c.handle}">Boost</a></div>`;
-  if (profileTab === "home") body = `<div class="two-col"><div class="feed-col">${boostBox}${c.goal ? goalCard(c) : ""}${c.commissions ? commissionCard(c) : ""}${c.posts.slice(0, 1).map((p, i) => postCard(c, p, i)).join("")}</div>
-    <aside class="rail"><span class="h">Top wishes</span>${open.slice(0, 2).map((w) => `<div class="wl-row" style="padding:10px"><div class="thumb" style="${thumbStyle(c.tint)}">${ITEM_ICON[w.icon]}</div><div class="info"><b style="font-size:14px">${esc(w.title)}</b><small>${money(w.price)}</small></div><a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">Gift</a></div>`).join("")}<a href="#/creator/${c.handle}/wishlist" style="font-weight:700;font-size:14px">See all wishes</a>
-    <span class="h" style="margin-top:8px">Recent boosts</span>${(c.boosts || []).map((b) => `<div class="sug"><div class="who"><span class="avatar" style="width:36px;height:36px;display:grid;place-items:center;color:var(--violet);border-width:0;background:var(--violet-soft)">${I.zap}</span><div><b style="font-size:14px">${esc(b.from)} sent ${money(b.amount)}</b><small>"${esc(b.msg)}" · ${b.when}</small></div></div></div>`).join("") || `<span class="muted" style="font-size:14px">No boosts yet — be the first.</span>`}</aside></div>`;
+  if (profileTab === "home") body = `<div class="feed-col">${c.goal ? goalCard(c) : ""}${c.commissions ? commissionCard(c) : ""}${(c.posts || []).slice(0, 2).map((p, i) => postCard(c, p, i)).join("")}
+    <div class="pro-block"><div class="h"><b>Shop</b><a href="#/creator/${c.handle}/shop">See all</a></div><div class="shop-grid compact">${(c.shop || []).slice(0, 3).map((s) => shopItem(c, s)).join("") || `<div class="empty">Shop coming soon.</div>`}</div></div>
+    <div class="pro-block"><div class="h"><b>Gallery</b><a href="#/creator/${c.handle}/gallery">View gallery</a></div>${galleryGrid({ ...c, gallery: (c.gallery || []).slice(0, 6) })}</div></div>`;
+  else if (profileTab === "posts") body = `<div class="feed-col">${(c.posts || []).length ? c.posts.map((p, i) => postCard(c, p, i)).join("") : `<div class="empty">No posts yet.</div>`}</div>`;
   else if (profileTab === "shop") body = shopTab(c);
-  else if (profileTab === "goals") body = c.goal ? `<div style="max-width:640px;display:flex;flex-direction:column;gap:16px">${goalCard(c)}<p class="muted" style="font-size:14px">A goal is one pooled amount the whole community funds together. When it's reached, ${esc(c.name.split(" ")[0])} orders the items and posts the unboxing.</p></div>` : `<div class="empty">${esc(c.name)} hasn't set a goal yet.</div>`;
-  else if (profileTab === "thanks") body = `<div class="feed-col">${(isMe ? state.thanks : [{ gift: c.wishlist.find((w) => w.done) ? c.wishlist.find((w) => w.done).title : "a gift", text: "It arrived! Thank you so much — you'll see it in the next post ♡", when: "3d" }]).map((t) => thanksCard(c, t)).join("")}</div>`;
+  else if (profileTab === "gallery") body = galleryGrid(c);
   else if (profileTab === "wishlist") body = `<div class="wish-grid">${open.map((w) => wishCard(c, w)).join("")}${done.map((w) => wishCard(c, w)).join("")}</div>`;
-  else body = `<div style="display:flex;flex-direction:column;gap:24px"><div><h3 style="font-family:var(--sans);font-weight:700;font-size:18px;margin-bottom:12px">Badges</h3>${badgeGrid(badgeState(CREATOR_BADGES, c))}</div><div class="about-grid">
+  else if (profileTab === "members") body = `<div class="members-page">${membersTeaser(c)}<div class="empty premium-empty"><b>Studio memberships</b><p>Custom domains, seasonal banners, and collab seats will live here. The free page keeps posts, shop, and gifts.</p><a class="btn btn-violet" href="#/pricing">See Free vs Studio</a></div></div>`;
+  else if (profileTab === "thanks") body = `<div class="feed-col">${(isMe ? state.thanks : [{ gift: (c.wishlist.find((w) => w.done) || { title: "a gift" }).title, text: "It arrived! Thank you so much — you'll see it in the next post ♡", when: "3d" }]).map((t) => thanksCard(c, t)).join("")}</div>`;
+  else body = `<div class="about-grid">
       <div class="step"><h3>About</h3><p>${esc(c.bio)}</p></div>
       <div class="step"><h3>Gifting rules</h3><p>Anonymous gifts welcome. No food, no gift cards. Notes are screened before I see them.</p></div>
       <div class="step"><h3>Where gifts go</h3><p>Everything ships through the BakaBoost relay. ${esc(c.name.split(" ")[0])}'s address is never shown to supporters.</p></div>
-      <div class="step"><h3>Links</h3><p style="display:flex;flex-direction:column;gap:6px">${(c.links || []).map((l) => `<a href="#/creator/${c.handle}">${esc(l)}</a>`).join("")}<a href="#/creator/${c.handle}">bakaboost.app/${c.handle}</a></p></div>
-    </div></div>`;
-  const inner = `${creatorHeader(c)}
-  <div class="tabs" style="${themeVars(c)}">${[["home", "Home"], ["shop", "Shop"], ["wishlist", "Wishlist"], ["goals", "Goals"], ["thanks", "Thanks"], ["about", "About"]].map(([t, l]) => `<a href="#/creator/${c.handle}/${t}" class="${profileTab === t ? "on" : ""}">${l}</a>`).join("")}</div>
-  <div style="${themeVars(c)}">${body}</div>`;
-  return marketingPage("explore", `<div class="wrap" style="padding-bottom:72px">${inner}</div>`);
+      <div class="step"><h3>Badges</h3>${badgeRow(badgeState(CREATOR_BADGES, c), { all: true })}</div>
+    </div>`;
+  const rail = `<aside class="pro-rail">${coffeeCard(c)}${membersTeaser(c)}
+    <div class="rail-block"><span class="h">Top supporters</span>${(c.boosts || []).map((b) => `<div class="sug"><div class="who"><span class="avatar" style="width:36px;height:36px;display:grid;place-items:center;color:var(--accent);border-width:0;background:var(--blush)">${I.cup}</span><div><b style="font-size:14px">${esc(b.from)}</b><small>${money(b.amount)} · ${b.when}</small></div></div></div>`).join("") || `<span class="muted" style="font-size:14px">Be the first coffee.</span>`}<a href="#/creator/${c.handle}/about" style="font-weight:700;font-size:13px">See leaderboard</a></div>
+    <div class="rail-block"><span class="h">Open wishes</span>${open.slice(0, 3).map((w) => `<div class="wl-row" style="padding:10px"><div class="thumb" style="${thumbStyle(c.tint)}">${ITEM_ICON[w.icon]}</div><div class="info"><b style="font-size:14px">${esc(w.title)}</b><small>${money(w.price)}</small></div><a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">Gift</a></div>`).join("")}<a href="#/creator/${c.handle}/wishlist" style="font-weight:700;font-size:13px">Wishlist</a></div></aside>`;
+  return marketingPage("explore", `<div class="wrap pro-page" style="${themeVars(c)}">${creatorHeader(c)}
+    <div class="tabs">${tabs.map(([t, l]) => `<a href="#/creator/${c.handle}/${t}" class="${profileTab === t ? "on" : ""}">${l}</a>`).join("")}</div>
+    <div class="pro-layout"><div class="pro-main">${body}</div>${rail}</div></div>`);
 }
 
 /* ---------- Page editor ---------- */
@@ -710,7 +747,13 @@ function pageAccountSettings() {
 
 function shopItem(c, s) {
   const locked = s.adult && !state.settings.showNsfw;
-  return `<div class="shop-item"><div class="th" style="${thumbStyle(c.tint)}">${ITEM_ICON[s.icon] || I[s.icon] || I.image}</div><div class="t"><b>${esc(s.title)}</b><span class="price">${money(s.price)}</span></div><span class="kind">${esc(s.kind)}</span><button class="btn btn-primary btn-sm" data-buy="${s.id}">${I.bag}<span>Buy · instant download</span></button>${locked ? `<div class="lock">${I.lock}<span>18+ · sign in to view</span><button class="btn btn-ghost btn-sm" data-act="unlock-nsfw">Show adult content</button></div>` : ""}</div>`;
+  return `<div class="shop-item">
+    <div class="th" style="${s.img ? "" : thumbStyle(c.tint)}">${s.img ? `<img src="${s.img}" alt="">` : (ITEM_ICON[s.icon] || I[s.icon] || I.image)}</div>
+    <div class="t"><b>${esc(s.title)}</b><span class="price">${money(s.price)}</span></div>
+    <span class="kind">${esc(s.kind)}</span>
+    <button class="btn btn-primary btn-sm" data-buy="${s.id}">${I.bag}<span>Buy · instant</span></button>
+    ${locked ? `<div class="lock">${I.lock}<span>18+ · sign in to view</span><button class="btn btn-ghost btn-sm" data-act="unlock-nsfw">Show adult content</button></div>` : ""}
+  </div>`;
 }
 function commissionCard(c) {
   const k = c.commissions; if (!k) return "";
@@ -1070,7 +1113,7 @@ window.addEventListener("hashchange", route);
 
 /* ---------- Interactions (event delegation) ---------- */
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-act],[data-save],[data-accent],[data-tint],[data-ssetting],[data-testi],[data-bamt],[data-follow],[data-like],[data-cat],[data-feed],[data-how],[data-mode],[data-amt],[data-role],[data-int],[data-hide],[data-del],[data-thank],[data-thank-later],[data-setting]");
+  const t = e.target.closest("[data-act],[data-save],[data-accent],[data-tint],[data-ssetting],[data-testi],[data-bamt],[data-coffee],[data-follow],[data-like],[data-cat],[data-feed],[data-how],[data-mode],[data-amt],[data-role],[data-int],[data-hide],[data-del],[data-thank],[data-thank-later],[data-setting]");
   if (!t) return;
   const d = t.dataset;
   if (d.act === "menu") { const dr = $("#drawer"); if (dr) { dr.classList.add("open"); document.body.style.overflow = "hidden"; } return; }
@@ -1083,6 +1126,7 @@ document.addEventListener("click", (e) => {
   if (d.how) { $("#how-body").innerHTML = d.how === "creator" ? howCreator() : howSupporter(); [...$("#how-tabs").children].forEach((b) => b.classList.toggle("on", b === t)); return; }
   if (d.mode) { co.mode = d.mode; route(); return; }
   if (d.testi) { testiTab = d.testi; route(); return; }
+  if (d.coffee) { bo.amount = Number(d.coffee); go("boost/" + d.ch); return; }
   if (d.buy) { const c = creators.find((cc) => (cc.shop || []).some((s) => s.id === d.buy)); const s = c.shop.find((x) => x.id === d.buy); state.supporter.sent.unshift({ to: c.handle, kind: "shop", item: s.title, amount: s.price, anon: false, msg: "", when: "Just now", step: 1 }); heartBurst(e.clientX, e.clientY, "#6f55e3"); toast("Delivered to your library — instantly"); return; }
   if (d.act === "unlock-nsfw") { state.settings.showNsfw = true; toast("Adult content shown — change this in Settings"); route(); return; }
   if (d.save) { e.preventDefault(); const S = state.supporter.saved; S.has(d.save) ? S.delete(d.save) : S.add(d.save); toast(S.has(d.save) ? "Saved for later" : "Removed from saved"); route(); return; }
