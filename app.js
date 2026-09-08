@@ -81,6 +81,7 @@ const I = {
   megaphone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h3l7 4V6l-7 4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/></svg>',
   bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
   book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/></svg>',
+  dots: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
 };
 const ITEM_ICON = { headset: I.headset, pen: I.pen, camera: I.camera, shirt: I.shirt, cup: I.cup, book: I.book, box: I.box, sparkle: I.sparkle };
 
@@ -189,6 +190,7 @@ const state = {
   user: { name: "Luna Aoki", handle: "lunaaoki", role: "creator", avatar: IMG.kat },
   following: new Set(["nekochii", "soradraws"]),
   liked: new Set(),
+  reposted: new Set(),
   gifts: [
     { id: "g1", from: "kindstranger", anon: true, item: "Ring light 18\" with stand", amount: 74, msg: "For the pink-hour lighting. Keep streaming ♡", when: "Today", status: "Shipped", thanked: false },
     { id: "g2", from: "moon_moth", anon: false, item: "Wacom Cintiq 16 (contribution)", amount: 60, msg: "Toward the tablet! Can't wait to see it on stream.", when: "Yesterday", status: "Contribution", thanked: false },
@@ -213,6 +215,20 @@ state.supporter = { name: "misa", handle: "misaluvr", avatar: IMG.kat, bio: "Sen
     { to: "lunaaoki", kind: "shop", item: "Sticker Pack Vol.1", amount: 4.99, anon: false, msg: "", when: "Last week", step: 1, thanked: false },
   ] };
 state.supporter.shoutout = true;
+state.dms = [
+  { a: "lunaaoki", b: "nekochii", seenId: "", messages: [
+    { id: "m1", from: "nekochii", text: "hoodie drop this weekend??", when: "2h" },
+    { id: "m2", from: "lunaaoki", text: "yes!! I'll send a pic after stream", when: "1h" },
+    { id: "m3", from: "nekochii", text: "raid incoming. don't start without me", when: "45m" },
+  ] },
+  { a: "lunaaoki", b: "mikachu", seenId: "", messages: [
+    { id: "m4", from: "mikachu", text: "can we collab on a cover this month?", when: "1d" },
+  ] },
+  { a: "lunaaoki", b: "misaluvr", seenId: "m6", messages: [
+    { id: "m5", from: "misaluvr", text: "the ring light is on the way ♡", when: "3h" },
+    { id: "m6", from: "lunaaoki", text: "you're an angel, thank you", when: "2h" },
+  ] },
+];
 const FEE_RATE = 0.029, FEE_FIXED = 0.30; // payment processing only — 0% platform cut
 const procFee = (amt) => Math.round((amt * FEE_RATE + FEE_FIXED) * 100) / 100;
 
@@ -253,6 +269,103 @@ const money = (n) => "$" + Number(n).toLocaleString("en-US", { minimumFractionDi
 const k = (n) => n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, "") + "K" : String(n);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const findCreator = (h) => creators.find((c) => c.handle === h);
+function me() { return state.role === "supporter" ? { name: state.supporter.name, handle: state.supporter.handle, avatar: state.supporter.avatar } : { name: state.user.name, handle: state.user.handle, avatar: state.user.avatar }; }
+function findPost(pid) {
+  for (const c of creators) {
+    const p = (c.posts || []).find((x) => x.id === pid);
+    if (p) return { c, p };
+  }
+  const wall = state.supporter.posts || [];
+  const p = wall.find((x) => x.id === pid);
+  if (p) return { c: supporterCard(), p };
+  return null;
+}
+function supporterCard() {
+  return { handle: state.supporter.handle, name: state.supporter.name, avatar: state.supporter.avatar, verified: false, posts: state.supporter.posts || [] };
+}
+function personByHandle(h) {
+  if (h === state.supporter.handle) return { name: state.supporter.name, handle: h, avatar: state.supporter.avatar, verified: false };
+  const c = findCreator(h);
+  if (c) return { name: c.name, handle: c.handle, avatar: c.avatar, verified: !!c.verified };
+  if (h === state.user.handle) return { name: state.user.name, handle: h, avatar: state.user.avatar, verified: true };
+  return { name: h, handle: h, avatar: IMG.av1, verified: false };
+}
+function dmDirectory() {
+  const mine = me().handle;
+  const people = creators.map((c) => personByHandle(c.handle));
+  people.push(personByHandle(state.supporter.handle));
+  const seen = new Set();
+  return people.filter((p) => {
+    if (!p.handle || p.handle === mine || seen.has(p.handle)) return false;
+    seen.add(p.handle);
+    return true;
+  });
+}
+function dmPeerHandle(convo) {
+  const h = me().handle;
+  return convo.a === h ? convo.b : convo.a;
+}
+function myDms() {
+  const h = me().handle;
+  return (state.dms || []).filter((d) => d.a === h || d.b === h);
+}
+function dmLast(convo) { return (convo.messages || [])[(convo.messages || []).length - 1]; }
+function dmIsUnread(convo) {
+  const last = dmLast(convo);
+  return !!(last && last.from !== me().handle && convo.seenId !== last.id);
+}
+function dmUnreadCount() { return myDms().filter(dmIsUnread).length; }
+function getOrCreateDm(handle) {
+  const mine = me().handle;
+  if (!handle || handle === mine) return null;
+  let convo = (state.dms = state.dms || []).find((d) => (d.a === mine && d.b === handle) || (d.a === handle && d.b === mine));
+  if (!convo) {
+    convo = { a: mine, b: handle, seenId: "", messages: [] };
+    state.dms.unshift(convo);
+  }
+  return convo;
+}
+function markDmRead(convo) {
+  const last = dmLast(convo);
+  if (last) convo.seenId = last.id;
+}
+const DM_REPLIES = ["wait that's so cute", "omw ♡", "yes let's", "sending it now", "i saw!!", "say less", "collab when you're free?", "screenshotting this"];
+function queuePeerReply(convo, peer) {
+  if (convo.typing) return;
+  convo.typing = true;
+  const wait = reduceMotion ? 200 : 1100 + Math.floor(Math.random() * 900);
+  clearTimeout(window._dmReply);
+  window._dmReply = setTimeout(() => {
+    convo.typing = false;
+    const msg = { id: "m" + Date.now(), from: peer, text: DM_REPLIES[Math.floor(Math.random() * DM_REPLIES.length)], when: "now" };
+    convo.messages.push(msg);
+    const hash = location.hash.replace(/^#\/?/, "");
+    if (hash === "messages/" + peer) convo.seenId = msg.id;
+    toast("@" + peer + " sent a message");
+    if (/^messages/.test(hash)) route();
+  }, wait);
+  if (/^messages/.test(location.hash.replace(/^#\/?/, ""))) route();
+}
+let openThread = null, postDraft = "", postImg = "", editImg = "", msgDraft = "", dmImg = "", dmQ = "";
+const REPLY_POOL = [
+  { name: "Mika", handle: "mikachu", text: "this is so cute omg" },
+  { name: "NekoChii", handle: "nekochii", text: "saving this immediately" },
+  { name: "Rei", handle: "reinyan", text: "stream when??" },
+  { name: "yumi", handle: "yumisroom", text: "the vibe is insane" },
+  { name: "Sora", handle: "soradraws", text: "the lighting?? hello??" },
+];
+creators.forEach((c) => {
+  (c.posts = c.posts || []).forEach((p, i) => {
+    p.id = p.id || c.handle + "-p" + i;
+    if (!p.replies) {
+      const n = 1 + (i % 3);
+      p.replies = REPLY_POOL.slice(0, n).map((r, j) => {
+        const cr = findCreator(r.handle) || c;
+        return { id: p.id + "-r" + j, name: r.name, handle: r.handle, avatar: cr.avatar, text: r.text, when: j ? j + "h" : "now", likes: 2 + j * 5 };
+      });
+    }
+  });
+});
 const go = (path) => { location.hash = "#" + path; };
 let toastTimer;
 function toast(msg) { let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); } t.textContent = msg; t.classList.remove("hidden"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 2400); }
@@ -260,16 +373,21 @@ function thumbStyle(tint) { return `background:${TINTS[tint % TINTS.length]}`; }
 function setTheme(t) { document.documentElement.setAttribute("data-theme", t || "light"); try { localStorage.setItem("bb-theme", t || ""); } catch (e) {} }
 function currentTheme() { const s = document.documentElement.getAttribute("data-theme"); if (s) return s; return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
 function themeBtn() { return `<button class="theme-btn" data-act="theme" title="Switch theme">${currentTheme() === "dark" ? I.sun : I.moon}</button>`; }
+function msgNavBtn() {
+  const n = dmUnreadCount();
+  return `<a class="msg-btn${n ? " has-unread" : ""}" href="#/messages" title="Messages" aria-label="Messages">${I.chat}${n ? `<span class="cnt">${n}</span>` : ""}<span class="msg-btn-label">Messages</span></a>`;
+}
 
 /* ---------- Shared chrome ---------- */
 function marketingNav(active) {
   const links = [["explore", "Explore creators"], ["how", "How it works"], ["pricing", "Pricing"], ["safety", "Safety"]];
+  const unread = dmUnreadCount();
   return `<div class="navbar"><div class="wrap"><nav class="topnav">
     <a class="brand" href="#/">${I.cat}<span>Baka<span class="bb">Boost</span></span></a>
-    <div class="links">${links.map(([r, l]) => `<a href="#/${r}" class="${active === r ? "active" : ""}">${l}</a>`).join("")}</div>
-    <div class="actions">${themeBtn()}<a class="btn btn-text" href="#/login">Log in</a><a class="btn btn-primary" href="#/signup">Join free</a><button class="menu-btn" data-act="menu" aria-label="Menu">${I.menu}</button></div>
+    <div class="links">${links.map(([r, l]) => `<a href="#/${r}" class="${active === r ? "active" : ""}">${l}</a>`).join("")}<a href="#/messages" class="${active === "messages" ? "active" : ""}">Messages${unread ? `<span class="nav-unread">${unread}</span>` : ""}</a></div>
+    <div class="actions">${msgNavBtn()}${themeBtn()}<a class="btn btn-text" href="#/login">Log in</a><a class="btn btn-primary" href="#/signup">Join free</a><button class="menu-btn" data-act="menu" aria-label="Menu">${I.menu}</button></div>
   </nav></div></div>
-  <div class="drawer" id="drawer"><div class="bg" data-act="menu-close"></div><div class="panel"><button class="close" data-act="menu-close">${I.x}</button>${links.map(([r, l], i) => `<a href="#/${r}" style="animation-delay:${.1 + i * .06}s" data-act="menu-close">${l}</a>`).join("")}<a href="#/login" style="animation-delay:.4s" data-act="menu-close">Log in</a><a class="btn btn-primary" href="#/signup" style="animation-delay:.46s" data-act="menu-close">Join free</a><button class="btn btn-ghost" data-act="theme" style="justify-content:center;margin-top:4px">${currentTheme() === "dark" ? I.sun : I.moon}<span>Switch theme</span></button></div></div>`;
+  <div class="drawer" id="drawer"><div class="bg" data-act="menu-close"></div><div class="panel"><button class="close" data-act="menu-close">${I.x}</button>${links.map(([r, l], i) => `<a href="#/${r}" style="animation-delay:${.1 + i * .06}s" data-act="menu-close">${l}</a>`).join("")}<a href="#/messages" style="animation-delay:.38s" data-act="menu-close">${I.chat}<span>Messages</span>${unread ? `<span class="cnt">${unread}</span>` : ""}</a><a href="#/login" style="animation-delay:.4s" data-act="menu-close">Log in</a><a class="btn btn-primary" href="#/signup" style="animation-delay:.46s" data-act="menu-close">Join free</a><button class="btn btn-ghost" data-act="theme" style="justify-content:center;margin-top:4px">${currentTheme() === "dark" ? I.sun : I.moon}<span>Switch theme</span></button></div></div>`;
 }
 function footer() {
   return `<div class="wrap"><footer>
@@ -288,8 +406,9 @@ function pro3dScene() {
   return `<div class="pro-3d" aria-hidden="true"><img src="${IMG.heroGirl}" alt=""></div>`;
 }
 function appShell(active, body) {
-  const creatorNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["dashboard", "Dashboard", I.grid], ["dashboard/page", "My page", I.palette], ["dashboard/wishlist", "My wishlist", I.list], ["dashboard/gifts", "Gifts", I.inbox, state.gifts.filter((g) => !g.thanked).length], ["dashboard/thanks", "Thank-yous", I.heart], ["dashboard/badges", "Badges", I.medal], ["dashboard/settings", "Settings", I.cog]];
-  const supporterNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["account", "My account", I.user], ["account/gifts", "Gifts I've sent", I.gift, state.supporter.sent.filter((s) => s.step < 2).length], ["account/following", "Following", I.heart], ["account/saved", "Saved wishes", I.bookmark], ["account/library", "Library", I.library], ["account/badges", "Badges", I.medal], ["account/settings", "Settings", I.cog]];
+  const unread = dmUnreadCount();
+  const creatorNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["messages", "Messages", I.chat, unread], ["dashboard", "Dashboard", I.grid], ["dashboard/page", "My page", I.palette], ["dashboard/wishlist", "My wishlist", I.list], ["dashboard/gifts", "Gifts", I.inbox, state.gifts.filter((g) => !g.thanked).length], ["dashboard/thanks", "Thank-yous", I.heart], ["dashboard/badges", "Badges", I.medal], ["dashboard/settings", "Settings", I.cog]];
+  const supporterNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["messages", "Messages", I.chat, unread], ["account", "My account", I.user], ["account/gifts", "Gifts I've sent", I.gift, state.supporter.sent.filter((s) => s.step < 2).length], ["account/following", "Following", I.heart], ["account/saved", "Saved wishes", I.bookmark], ["account/library", "Library", I.library], ["account/badges", "Badges", I.medal], ["account/settings", "Settings", I.cog]];
   const sup = state.role === "supporter"; const nav = sup ? supporterNav : creatorNav;
   const me = sup ? state.supporter : state.user;
   return `<div class="page app">
@@ -303,7 +422,7 @@ function appShell(active, body) {
         <a class="me" href="#/${sup ? "account" : "creator/" + state.user.handle}"><img class="avatar" src="${me.avatar}" alt=""><div><b>${esc(me.name)}</b><small>@${me.handle}</small></div></a>
       </div>
     </aside>
-    <main class="main">${body}</main>
+    <main class="main${active === "messages" ? " dm-main" : ""}">${body}</main>
     ${sup ? `<a class="mobile-fab violet" href="#/explore" aria-label="Send a gift">${I.gift}</a>` : `<button class="mobile-fab" data-act="add-wish" aria-label="Add wish">${I.plus}</button>`}
   </div>`;
 }
@@ -594,19 +713,88 @@ function wishCard(c, w) {
     ${w.done ? `<button class="btn btn-ghost btn-sm" disabled>Gifted</button>` : `<a class="btn btn-primary btn-sm" href="#/gift/${c.handle}/${w.id}">${I.gift}<span>${w.contrib ? "Chip in" : "Gift"}</span></a>`}
   </div>`;
 }
+function readLocalImage(file, cb) {
+  if (!file || !/^image\//.test(file.type)) { toast("Pick a photo (jpg, png, gif, webp)"); return; }
+  if (file.size > 5 * 1024 * 1024) { toast("Keep photos under 5MB"); return; }
+  const r = new FileReader();
+  r.onload = () => cb(String(r.result));
+  r.onerror = () => toast("Couldn't read that file");
+  r.readAsDataURL(file);
+}
+function syncComposerPostBtn() {
+  const btn = document.querySelector(".composer [data-act=publish-post]");
+  if (btn) btn.disabled = !(postDraft.trim() || postImg);
+}
+function postComposer(place) {
+  const u = me();
+  const left = 280 - postDraft.length;
+  return `<div class="composer" data-place="${place}">
+    <img class="avatar" src="${u.avatar}" alt="">
+    <div class="composer-body">
+      <textarea id="composer-text" maxlength="280" rows="3" placeholder="What's happening?">${esc(postDraft)}</textarea>
+      <div class="composer-preview" id="composer-preview" ${postImg ? "" : "hidden"}>${postImg ? `<img src="${postImg}" alt=""><button type="button" class="icon-btn" data-act="clear-post-img" aria-label="Remove photo">${I.x}</button>` : ""}</div>
+      <div class="composer-bar">
+        <label class="media-btn" title="Add photo">${I.image}<input id="composer-file" type="file" accept="image/*" hidden></label>
+        <span class="count ${left < 20 ? "warn" : ""}">${left}</span>
+        <button class="btn btn-primary btn-sm" data-act="publish-post" ${postDraft.trim() || postImg ? "" : "disabled"}>Post</button>
+      </div>
+    </div>
+  </div>`;
+}
 function postCard(c, p, i, opts = {}) {
-  const key = c.handle + i, liked = state.liked.has(key);
+  const pid = p.id || c.handle + "-" + i;
+  const liked = state.liked.has(pid);
+  const rt = state.reposted.has(pid);
   const onProfile = opts.onProfile;
+  const mine = me().handle === c.handle;
+  const nReply = (p.replies || []).length;
+  const nLike = (p.likes || 0) + (liked ? 1 : 0);
+  const nRt = (p.reposts || 0) + (rt ? 1 : 0);
+  const open = openThread === pid;
   const head = onProfile
-    ? `<div class="head lite"><small>${p.when}</small>${p.tag ? `<span class="badge">${p.tag}</span>` : ""}</div>`
-    : `<div class="head"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b style="display:flex;align-items:center;gap:4px">${esc(c.name)}${c.verified ? `<span style="width:14px;height:14px;color:var(--accent);display:inline-flex">${I.verified}</span>` : ""}</b><small>@${c.handle} · ${p.when}</small></div></a>
-      ${c.handle !== state.user.handle ? `<button class="btn btn-ghost btn-sm" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button>` : ""}</div>`;
-  return `<article class="post${onProfile ? " lite" : ""}">
-    ${head}
+    ? `<div class="head lite"><small>${p.when}${p.edited ? " · edited" : ""}</small>${p.tag ? `<span class="badge">${p.tag}</span>` : ""}</div>`
+    : `<div class="head"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b style="display:flex;align-items:center;gap:4px">${esc(c.name)}${c.verified ? `<span style="width:14px;height:14px;color:var(--accent);display:inline-flex">${I.verified}</span>` : ""}</b><small>@${c.handle} · ${p.when}${p.edited ? " · edited" : ""}</small></div></a>
+      ${mine ? "" : `<button class="btn btn-ghost btn-sm" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button>`}</div>`;
+  const menu = mine ? `<details class="post-menu"><summary aria-label="More">${I.dots}</summary><div class="menu">
+      <button data-act="edit-post" data-pid="${pid}">${I.pen}<span>Edit</span></button>
+      <button class="danger" data-act="del-post" data-pid="${pid}">${I.trash}<span>Delete</span></button>
+    </div></details>` : "";
+  return `<article class="post${onProfile ? " lite" : ""}${open ? " open" : ""}" data-pid="${pid}">
+    <div class="post-top">${head}${menu}</div>
     <p>${esc(p.text)}</p>
     ${p.img ? `<img class="media" src="${p.img}" alt="">` : ""}
-    <div class="acts"><button class="${liked ? "liked" : ""}" data-like="${key}"><span>${I.heart}${k(p.likes + (liked ? 1 : 0))}</span></button><span>${I.chat}${p.comments}</span><span>${I.repost}${p.reposts}</span></div>
+    <div class="acts">
+      <button class="act ${open ? "on" : ""}" data-act="toggle-thread" data-pid="${pid}">${I.chat}<span>${nReply}</span></button>
+      <button class="act ${rt ? "rt" : ""}" data-act="repost" data-pid="${pid}">${I.repost}<span>${nRt}</span></button>
+      <button class="act ${liked ? "liked" : ""}" data-like="${pid}">${I.heart}<span>${k(nLike)}</span></button>
+    </div>
+    ${open ? threadBox(c, p) : ""}
   </article>`;
+}
+function threadBox(c, p) {
+  const u = me();
+  const replies = p.replies || [];
+  return `<div class="thread">
+    <div class="reply-compose">
+      <img class="avatar" src="${u.avatar}" alt="">
+      <input id="cmt-${p.id}" maxlength="280" placeholder="Post your reply">
+      <button class="btn btn-primary btn-sm" data-act="send-comment" data-pid="${p.id}">Reply</button>
+    </div>
+    ${replies.length ? replies.map((r) => {
+      const liked = state.liked.has(r.id);
+      const own = r.handle === u.handle;
+      return `<div class="reply">
+        <img class="avatar" src="${r.avatar}" alt="">
+        <div class="body">
+          <div class="meta"><b>${esc(r.name)}</b><small>@${esc(r.handle)} · ${r.when}</small>
+            ${own ? `<button class="icon-btn" data-act="del-comment" data-pid="${p.id}" data-rid="${r.id}" aria-label="Delete reply">${I.x}</button>` : ""}
+          </div>
+          <p>${esc(r.text)}</p>
+          <button class="act ${liked ? "liked" : ""}" data-like="${r.id}">${I.heart}<span>${(r.likes || 0) + (liked ? 1 : 0)}</span></button>
+        </div>
+      </div>`;
+    }).join("") : `<p class="muted" style="font-size:13px">No replies yet. Be the first.</p>`}
+  </div>`;
 }
 function thanksCard(c, t) {
   return `<article class="post thanks"><div class="head"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b>${esc(c.name)}</b><small>@${c.handle} · ${t.when}</small></div></a></div>
@@ -629,7 +817,7 @@ function creatorHeader(c, opts = {}) {
         <p class="pro-bio">${esc(c.bio)}</p>
         <div class="pro-links">${(c.links || []).map((l) => `<a href="#/creator/${c.handle}">${I.link}<span>${esc(l)}</span></a>`).join("")}<a href="#/creator/${c.handle}"><span>bakaboost.com/${c.handle}</span></a></div>
       </div>
-      <div class="pro-acts">${opts.preview ? "" : isMe ? `<a class="btn btn-ghost" href="#/dashboard/page">${I.palette}<span>Edit page</span></a>` : `<button class="btn btn-ghost" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button><a class="btn btn-primary" href="#/boost/${c.handle}">${I.cup}<span>Buy a coffee</span></a>`}</div>
+      <div class="pro-acts">${opts.preview ? "" : isMe ? `<a class="btn btn-ghost" href="#/messages">${I.chat}<span>Messages</span></a><a class="btn btn-ghost" href="#/dashboard/page">${I.palette}<span>Edit page</span></a>` : `<button class="btn btn-ghost" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button><a class="btn btn-primary" href="#/messages/${c.handle}">${I.chat}<span>Message</span></a><a class="btn btn-ghost" href="#/boost/${c.handle}">${I.cup}<span>Buy a coffee</span></a>`}</div>
     </div>
   </div>`;
 }
@@ -688,7 +876,7 @@ function pageCreator(handle, tab) {
     <div class="pro-block"><div class="h"><b>Shop</b><a href="#/creator/${c.handle}/shop">All</a></div><div class="shop-grid compact">${(c.shop || []).slice(0, 4).map((s) => shopItem(c, s)).join("")}</div></div>
     <div class="pro-block gallery-block"><div class="h"><b>Gallery</b><a href="#/creator/${c.handle}/gallery">View all ${I.arrow}</a></div>${galleryGrid(c, { preview: true })}</div>
   </div>`;
-  else if (profileTab === "posts") body = `<div class="feed-col">${(c.posts || []).length ? c.posts.map((p, i) => postCard(c, p, i, { onProfile: true })).join("") : `<div class="empty">No posts yet.</div>`}</div>`;
+  else if (profileTab === "posts") body = `<div class="feed-col">${isMe ? postComposer("profile") : ""}${(c.posts || []).length ? c.posts.map((p, i) => postCard(c, p, i, { onProfile: true })).join("") : `<div class="empty">No posts yet.</div>`}</div>`;
   else if (profileTab === "shop") body = shopTab(c);
   else if (profileTab === "gallery") body = galleryGrid(c);
   else if (profileTab === "wishlist") body = `<div class="wish-grid">${open.map((w) => wishCard(c, w)).join("")}${done.map((w) => wishCard(c, w)).join("")}</div>`;
@@ -938,15 +1126,89 @@ let feedTab = "foryou";
 function pageFeed() {
   const tabs = [["foryou", "For you"], ["following", "Following"], ["Art", "Art"], ["Cosplay", "Cosplay"]];
   let list = creators.flatMap((c) => c.posts.map((p, i) => ({ c, p, i })));
+  if (state.role === "supporter" && (state.supporter.posts || []).length) {
+    const sc = supporterCard();
+    list = sc.posts.map((p, i) => ({ c: sc, p, i })).concat(list);
+  }
   if (feedTab === "following") list = list.filter((x) => state.following.has(x.c.handle));
   else if (feedTab !== "foryou") list = list.filter((x) => x.c.cats.includes(feedTab) || x.p.tag === feedTab);
   const sug = creators.filter((c) => !state.following.has(c.handle) && c.handle !== state.user.handle).slice(0, 3);
   return appShell("feed", `<div class="main-head"><h2>Home</h2><label class="search" style="min-width:300px">${I.search}<input placeholder="Search creators, posts, tags"></label></div>
   <div class="two-col">
     <div><div class="tabs" style="margin-top:0">${tabs.map(([t, l]) => `<button class="${feedTab === t ? "on" : ""}" data-feed="${t}">${l}</button>`).join("")}</div>
-      <div class="feed-col">${list.length ? list.map((x) => postCard(x.c, x.p, x.i)).join("") : `<div class="empty">Nothing here yet. Follow a few creators and this fills up.</div>`}</div></div>
+      <div class="feed-col">${postComposer("feed")}${list.length ? list.map((x) => postCard(x.c, x.p, x.i)).join("") : `<div class="empty">Nothing here yet. Follow a few creators and this fills up.</div>`}</div></div>
     <aside class="rail"><span class="h">Suggested creators</span>${sug.map((c) => `<div class="sug"><a class="who" href="#/creator/${c.handle}"><img class="avatar" src="${c.avatar}" alt=""><div><b>${esc(c.name)}</b><small>@${c.handle}</small></div></a><button class="btn btn-ghost btn-sm" data-follow="${c.handle}">Follow</button></div>`).join("")}<a href="#/explore" style="font-weight:600;font-size:14px">See all</a>
       <div class="card" style="gap:10px;margin-top:8px;background:var(--blush);border:0"><b>Make someone's day</b><p class="muted" style="font-size:14px">Pick a creator and gift one open wish.</p><a class="btn btn-primary btn-sm" href="#/explore">Browse wishes</a></div></aside>
+  </div>`);
+}
+
+function pageMessages(peer) {
+  const mine = me();
+  if (peer === mine.handle) peer = "";
+  const existing = peer ? myDms().find((d) => d.a === peer || d.b === peer) : null;
+  const convo = peer ? (existing || { a: mine.handle, b: peer, messages: [], seenId: "" }) : null;
+  if (existing) markDmRead(existing);
+  const q = (dmQ || "").toLowerCase();
+  const list = myDms()
+    .map((d) => ({ d, p: personByHandle(dmPeerHandle(d)), last: dmLast(d) }))
+    .filter((x) => !q || x.p.name.toLowerCase().indexOf(q) >= 0 || x.p.handle.toLowerCase().indexOf(q) >= 0 || (x.last && (x.last.text || "").toLowerCase().indexOf(q) >= 0))
+    .sort((a, b) => {
+      const au = dmIsUnread(a.d) ? 1 : 0, bu = dmIsUnread(b.d) ? 1 : 0;
+      if (au !== bu) return bu - au;
+      return (b.last ? 1 : 0) - (a.last ? 1 : 0);
+    });
+  const other = peer ? personByHandle(peer) : null;
+  const msgs = convo ? convo.messages : [];
+  const canSend = !!(msgDraft.trim() || dmImg);
+  const preview = dmImg ? `<div class="composer-preview" id="dm-preview"><img src="${dmImg}" alt=""><button type="button" class="icon-btn" data-act="clear-dm-img" aria-label="Remove photo">${I.x}</button></div>` : `<div class="composer-preview" id="dm-preview" hidden></div>`;
+  const rows = list.length ? list.map((x) => {
+    const unread = dmIsUnread(x.d);
+    const previewText = x.d.typing && x.last && x.last.from === mine.handle ? "Typing…" : (x.last ? (x.last.from === mine.handle ? "You: " : "") + (x.last.img && !x.last.text ? "Sent a photo" : x.last.text) : "Start a conversation");
+    return `<a class="dm-row ${peer === x.p.handle ? "on" : ""} ${unread ? "unread" : ""}" href="#/messages/${x.p.handle}">
+      <img class="avatar" src="${x.p.avatar}" alt="">
+      <div class="dm-row-body">
+        <div class="dm-row-top"><b>${esc(x.p.name)}${x.p.verified ? I.verified : ""}</b><span class="handle">@${x.p.handle}</span><span class="when">${x.last ? x.last.when : ""}</span></div>
+        <p>${esc(previewText)}</p>
+      </div>${unread ? `<i class="dm-dot"></i>` : ""}
+    </a>`;
+  }).join("") : `<div class="empty dm-empty">No conversations yet. Start one.</div>`;
+  const bubbles = msgs.map((m) => {
+    const mineMsg = m.from === mine.handle;
+    const who = personByHandle(m.from);
+    return `<div class="dm-bubble ${mineMsg ? "me" : "them"}">
+      ${mineMsg ? "" : `<img class="avatar" src="${who.avatar}" alt="">`}
+      <div class="bubble">
+        ${m.text ? `<p>${esc(m.text)}</p>` : ""}
+        ${m.img ? `<img class="dm-pic" src="${m.img}" alt="">` : ""}
+        <span class="when">${m.when}</span>
+      </div>
+    </div>`;
+  }).join("");
+  const thread = other ? `<div class="dm-thread-head">
+      <a class="icon-btn dm-back" href="#/messages" aria-label="Back">${I.arrow}</a>
+      <a class="who" href="${findCreator(other.handle) ? "#/creator/" + other.handle : "#/messages/" + other.handle}"><img class="avatar" src="${other.avatar}" alt=""><div><b>${esc(other.name)}${other.verified ? I.verified : ""}</b><small>@${other.handle}</small></div></a>
+    </div>
+    <div class="dm-log" id="dm-log">${bubbles || `<div class="empty">No messages yet. Say hi.</div>`}${convo && convo.typing ? `<div class="dm-bubble them typing"><img class="avatar" src="${other.avatar}" alt=""><div class="bubble"><p>Typing…</p></div></div>` : ""}</div>
+    <form class="dm-compose">
+      ${preview}
+      <div class="dm-compose-bar">
+        <label class="media-btn" title="Add photo">${I.image}<input id="dm-file" type="file" accept="image/*" hidden></label>
+        <textarea id="dm-text" rows="1" maxlength="500" placeholder="Start a new message">${esc(msgDraft)}</textarea>
+        <button class="icon-btn send" data-act="send-dm" data-who="${other.handle}" ${canSend ? "" : "disabled"} aria-label="Send">${I.send}</button>
+      </div>
+    </form>` : `<div class="dm-blank">
+      <div class="ic">${I.chat}</div>
+      <h2>Select a message</h2>
+      <p>Choose from your existing conversations, or start a new one.</p>
+      <button class="btn btn-primary" data-act="dm-new">${I.pen}<span>New message</span></button>
+    </div>`;
+  return appShell("messages", `<div class="dm ${peer ? "open-thread" : ""}">
+    <div class="dm-list">
+      <div class="dm-list-head"><h2>Messages</h2><button class="icon-btn" data-act="dm-new" title="New message" aria-label="New message">${I.pen}</button></div>
+      <label class="search dm-search">${I.search}<input id="dm-q" value="${esc(dmQ)}" placeholder="Search Direct Messages"></label>
+      <div class="dm-rows">${rows}</div>
+    </div>
+    <div class="dm-thread">${thread}</div>
   </div>`);
 }
 
@@ -1168,6 +1430,7 @@ function route() {
     case "login": html = pageLogin(); break;
     case "signup": html = pageSignup(); break;
     case "feed": html = pageFeed(); break;
+    case "messages": html = pageMessages(p1 || ""); break;
     case "account": html = p1 === "gifts" ? pageAccountGifts() : p1 === "following" ? pageFollowing() : p1 === "saved" ? pageSaved() : p1 === "settings" ? pageAccountSettings() : p1 === "badges" ? pageBadges("supporter") : p1 === "library" ? pageLibrary() : pageAccount(); break;
     case "dashboard": html = p1 === "badges" ? pageBadges("creator") : p1 === "page" ? pagePageEditor() : p1 === "wishlist" ? pageWishlist() : p1 === "gifts" ? pageGifts() : p1 === "thanks" ? pageThanksInbox() : p1 === "settings" ? pageSettings() : pageDashboard(); break;
     default: html = pageHome();
@@ -1178,12 +1441,13 @@ function route() {
   window.scrollTo(0, keepY);
   if (sameView) $("#root").firstElementChild && $("#root").firstElementChild.style.setProperty("animation", "none");
   scrollSetup($("#root")); enhance(); onScrollNav();
+  const log = $("#dm-log"); if (log) log.scrollTop = log.scrollHeight;
 }
 window.addEventListener("hashchange", route);
 
 /* ---------- Interactions (event delegation) ---------- */
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-act],[data-save],[data-accent],[data-tint],[data-ssetting],[data-testi],[data-bamt],[data-coffee],[data-follow],[data-like],[data-cat],[data-feed],[data-how],[data-mode],[data-amt],[data-role],[data-int],[data-hide],[data-del],[data-thank],[data-thank-later],[data-setting]");
+  const t = e.target.closest("[data-act],[data-save],[data-accent],[data-tint],[data-ssetting],[data-testi],[data-bamt],[data-coffee],[data-follow],[data-like],[data-cat],[data-feed],[data-how],[data-mode],[data-amt],[data-role],[data-int],[data-hide],[data-del],[data-thank],[data-thank-later],[data-setting],[data-pid],[data-rid]");
   if (!t) return;
   const d = t.dataset;
   if (d.act === "menu") { const dr = $("#drawer"); if (dr) { dr.classList.add("open"); document.body.style.overflow = "hidden"; } return; }
@@ -1191,6 +1455,64 @@ document.addEventListener("click", (e) => {
   if (d.act === "theme") { document.body.style.overflow = ""; setTheme(currentTheme() === "dark" ? "light" : "dark"); route(); return; }
   if (d.follow) { e.preventDefault(); state.following.has(d.follow) ? state.following.delete(d.follow) : state.following.add(d.follow); toast(state.following.has(d.follow) ? "Following " + findCreator(d.follow).name : "Unfollowed"); route(); return; }
   if (d.like) { state.liked.has(d.like) ? state.liked.delete(d.like) : state.liked.add(d.like); route(); return; }
+  if (d.act === "toggle-thread") { openThread = openThread === d.pid ? null : d.pid; route(); return; }
+  if (d.act === "repost") { state.reposted.has(d.pid) ? state.reposted.delete(d.pid) : state.reposted.add(d.pid); toast(state.reposted.has(d.pid) ? "Reposted" : "Removed repost"); route(); return; }
+  if (d.act === "publish-post") {
+    const text = ($("#composer-text") && $("#composer-text").value.trim()) || postDraft.trim();
+    if (!text && !postImg) { toast("Write something or add a photo"); return; }
+    const post = { id: "p" + Date.now(), text, likes: 0, reposts: 0, when: "now", replies: [] };
+    if (postImg) post.img = postImg;
+    postDraft = ""; postImg = ""; openThread = post.id; toast("Posted");
+    if (state.role === "supporter") {
+      (state.supporter.posts = state.supporter.posts || []).unshift(post);
+      go("feed"); return;
+    }
+    const host = myCreator();
+    (host.posts = host.posts || []).unshift(post);
+    const dest = location.hash.indexOf("/feed") >= 0 || location.hash.replace(/^#\/?/, "") === "feed" ? "feed" : "creator/" + host.handle + "/posts";
+    if (location.hash.replace(/^#\/?/, "") === dest) route(); else go(dest);
+    return;
+  }
+  if (d.act === "clear-post-img") { postImg = ""; const box = $("#composer-preview"); if (box) { box.hidden = true; box.innerHTML = ""; } syncComposerPostBtn(); return; }
+  if (d.act === "clear-edit-img") { editImg = ""; const box = $("#ed-preview"); if (box) { box.hidden = true; box.innerHTML = ""; } return; }
+  if (d.act === "edit-post") {
+    const hit = findPost(d.pid); if (!hit) return;
+    editImg = hit.p.img || "";
+    openModal(`<h3>Edit post</h3>
+      <div class="field"><textarea id="ed-post" maxlength="280" rows="5">${esc(hit.p.text)}</textarea><span class="hint">280 characters max. Photo optional.</span></div>
+      <div class="composer-preview" id="ed-preview" ${editImg ? "" : "hidden"}>${editImg ? `<img src="${editImg}" alt=""><button type="button" class="icon-btn" data-act="clear-edit-img" aria-label="Remove photo">${I.x}</button>` : ""}</div>
+      <label class="media-btn">${I.image}<span>Add photo</span><input id="ed-file" type="file" accept="image/*" hidden></label>
+      <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-ghost" data-act="close-modal">Cancel</button><button class="btn btn-primary" data-act="save-post" data-pid="${d.pid}">Save</button></div>`);
+    return;
+  }
+  if (d.act === "save-post") {
+    const hit = findPost(d.pid); const text = ($("#ed-post") && $("#ed-post").value.trim()) || "";
+    if (!hit || (!text && !editImg)) { toast("Post needs text or a photo"); return; }
+    hit.p.text = text; hit.p.edited = true;
+    if (editImg) hit.p.img = editImg; else delete hit.p.img;
+    closeModal(); toast("Updated"); route(); return;
+  }
+  if (d.act === "del-post") {
+    openModal(`<h3>Delete post?</h3><p class="muted">This can't be undone.</p><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-ghost" data-act="close-modal">Keep it</button><button class="btn btn-primary" data-act="confirm-del-post" data-pid="${d.pid}">Delete</button></div>`);
+    return;
+  }
+  if (d.act === "confirm-del-post") {
+    if ((state.supporter.posts || []).some((x) => x.id === d.pid)) state.supporter.posts = state.supporter.posts.filter((x) => x.id !== d.pid);
+    else { const hit = findPost(d.pid); if (hit) hit.c.posts = hit.c.posts.filter((x) => x.id !== d.pid); }
+    if (openThread === d.pid) openThread = null;
+    closeModal(); toast("Deleted"); route(); return;
+  }
+  if (d.act === "send-comment") {
+    const hit = findPost(d.pid); const input = $("#cmt-" + d.pid); const text = input && input.value.trim();
+    if (!hit || !text) { toast("Write a reply first"); return; }
+    const u = me();
+    (hit.p.replies = hit.p.replies || []).push({ id: "r" + Date.now(), name: u.name, handle: u.handle, avatar: u.avatar, text, when: "now", likes: 0 });
+    toast("Replied"); route(); return;
+  }
+  if (d.act === "del-comment") {
+    const hit = findPost(d.pid); if (hit) hit.p.replies = (hit.p.replies || []).filter((r) => r.id !== d.rid);
+    toast("Reply removed"); route(); return;
+  }
   if (d.cat) { exploreCat = d.cat; route(); return; }
   if (d.feed) { feedTab = d.feed; route(); return; }
   if (d.how) { $("#how-body").innerHTML = d.how === "creator" ? howCreator() : howSupporter(); [...$("#how-tabs").children].forEach((b) => b.classList.toggle("on", b === t)); return; }
@@ -1241,17 +1563,129 @@ document.addEventListener("click", (e) => {
   if (d.act === "dl") { toast("Download started"); return; }
   if (d.act === "shoutout") { co.shout = !co.shout; route(); return; }
   if (d.act === "copy") { toast("Link copied: bakaboost.app/" + state.user.handle); return; }
-  if (d.act === "new-post") { return; }
+  if (d.act === "dm-new") {
+    const q = (dmQ || "").toLowerCase();
+    const people = dmDirectory().filter((p) => !q || p.name.toLowerCase().indexOf(q) >= 0 || p.handle.toLowerCase().indexOf(q) >= 0);
+    openModal(`<h3>New message</h3><p class="muted" style="font-size:14px;margin-top:-8px">Direct message — just you and them.</p>
+      <div class="field"><label class="search">${I.search}<input id="dm-people-q" placeholder="Search people"></label></div>
+      <div class="dm-people" id="dm-people">${people.slice(0, 12).map((p) => `<button type="button" class="dm-person" data-act="dm-start" data-who="${p.handle}"><img class="avatar" src="${p.avatar}" alt=""><div><b>${esc(p.name)}${p.verified ? I.verified : ""}</b><small>@${p.handle}</small></div></button>`).join("")}</div>`);
+    return;
+  }
+  if (d.act === "dm-start") { closeModal(); go("messages/" + d.who); return; }
+  if (d.act === "clear-dm-img") { dmImg = ""; const box = $("#dm-preview"); if (box) { box.hidden = true; box.innerHTML = ""; } const btn = document.querySelector("[data-act=send-dm]"); if (btn) btn.disabled = !msgDraft.trim(); return; }
+  if (d.act === "send-dm") {
+    e.preventDefault();
+    const who = d.who;
+    const text = ($("#dm-text") && $("#dm-text").value.trim()) || msgDraft.trim();
+    if (!who || (!text && !dmImg)) { toast("Write a message first"); return; }
+    const convo = getOrCreateDm(who); if (!convo) return;
+    const msg = { id: "m" + Date.now(), from: me().handle, text, when: "now" };
+    if (dmImg) msg.img = dmImg;
+    convo.messages.push(msg);
+    convo.seenId = msg.id;
+    msgDraft = ""; dmImg = "";
+    queuePeerReply(convo, who);
+    if (location.hash.replace(/^#\/?/, "") === "messages/" + who) route(); else go("messages/" + who);
+    return;
+  }
 });
 document.addEventListener("input", (e) => {
-  if (e.target.id === "explore-q") { exploreQ = e.target.value; const v = e.target.value; route(); const i = $("#explore-q"); i.focus(); i.setSelectionRange(v.length, v.length); }
+  if (e.target.id === "dm-q") { dmQ = e.target.value; const v = e.target.value; route(); const i = $("#dm-q"); if (i) { i.focus(); i.setSelectionRange(v.length, v.length); } }
+  if (e.target.id === "dm-people-q") {
+    const q = e.target.value.toLowerCase();
+    const box = $("#dm-people");
+    if (box) box.innerHTML = dmDirectory().filter((p) => !q || p.name.toLowerCase().indexOf(q) >= 0 || p.handle.toLowerCase().indexOf(q) >= 0).slice(0, 12).map((p) => `<button type="button" class="dm-person" data-act="dm-start" data-who="${p.handle}"><img class="avatar" src="${p.avatar}" alt=""><div><b>${esc(p.name)}${p.verified ? I.verified : ""}</b><small>@${p.handle}</small></div></button>`).join("");
+  }
+  if (e.target.id === "dm-text") {
+    msgDraft = e.target.value;
+    const btn = document.querySelector(".dm-compose [data-act=send-dm]");
+    if (btn) btn.disabled = !(msgDraft.trim() || dmImg);
+  }
+  if (e.target.id === "composer-text") {
+    postDraft = e.target.value;
+    const bar = e.target.closest(".composer") && e.target.closest(".composer").querySelector(".count");
+    const btn = e.target.closest(".composer") && e.target.closest(".composer").querySelector("[data-act=publish-post]");
+    const left = 280 - postDraft.length;
+    if (bar) { bar.textContent = left; bar.classList.toggle("warn", left < 20); }
+    if (btn) btn.disabled = !(postDraft.trim() || postImg);
+  }
   if (e.target.id === "co-msg") co.msg = e.target.value;
   if (/^pe-/.test(e.target.id) || e.target.dataset.link !== undefined) { clearTimeout(window._pe); window._pe = setTimeout(() => { const el = document.activeElement, id = el && el.id, pos = el && el.selectionStart; readEditor(); route(); if (id) { const n = $("#" + id); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (err) {} } } }, 400); }
   if (e.target.id === "bo-msg") bo.msg = e.target.value;
   if (e.target.id === "co-name") co.name = e.target.value;
   if (e.target.id === "co-custom") { const v = Number(e.target.value); if (v > 0) co.amount = v; }
 });
-document.addEventListener("change", (e) => { if (e.target.id === "co-custom") route(); });
+document.addEventListener("change", (e) => {
+  if (e.target.id === "co-custom") route();
+  if (e.target.id === "composer-file" && e.target.files && e.target.files[0]) {
+    readLocalImage(e.target.files[0], (src) => {
+      postImg = src; e.target.value = "";
+      const box = $("#composer-preview");
+      if (box) { box.hidden = false; box.innerHTML = `<img src="${src}" alt=""><button type="button" class="icon-btn" data-act="clear-post-img" aria-label="Remove photo">${I.x}</button>`; }
+      syncComposerPostBtn();
+    });
+  }
+  if (e.target.id === "dm-file" && e.target.files && e.target.files[0]) {
+    readLocalImage(e.target.files[0], (src) => {
+      dmImg = src; e.target.value = "";
+      const box = $("#dm-preview");
+      if (box) { box.hidden = false; box.innerHTML = `<img src="${src}" alt=""><button type="button" class="icon-btn" data-act="clear-dm-img" aria-label="Remove photo">${I.x}</button>`; }
+      const btn = document.querySelector(".dm-compose [data-act=send-dm]");
+      if (btn) btn.disabled = false;
+    });
+  }
+  if (e.target.id === "ed-file" && e.target.files && e.target.files[0]) {
+    readLocalImage(e.target.files[0], (src) => {
+      editImg = src; e.target.value = "";
+      const box = $("#ed-preview");
+      if (box) { box.hidden = false; box.innerHTML = `<img src="${src}" alt=""><button type="button" class="icon-btn" data-act="clear-edit-img" aria-label="Remove photo">${I.x}</button>`; }
+    });
+  }
+});
+document.addEventListener("paste", (e) => {
+  if (!e.target || (e.target.id !== "composer-text" && e.target.id !== "ed-post" && e.target.id !== "dm-text")) return;
+  const item = [...(e.clipboardData && e.clipboardData.items || [])].find((x) => x.type && x.type.indexOf("image/") === 0);
+  if (!item) return;
+  const file = item.getAsFile();
+  readLocalImage(file, (src) => {
+    if (e.target.id === "ed-post") {
+      editImg = src;
+      const box = $("#ed-preview");
+      if (box) { box.hidden = false; box.innerHTML = `<img src="${src}" alt=""><button type="button" class="icon-btn" data-act="clear-edit-img" aria-label="Remove photo">${I.x}</button>`; }
+    } else if (e.target.id === "dm-text") {
+      dmImg = src;
+      const box = $("#dm-preview");
+      if (box) { box.hidden = false; box.innerHTML = `<img src="${src}" alt=""><button type="button" class="icon-btn" data-act="clear-dm-img" aria-label="Remove photo">${I.x}</button>`; }
+      const btn = document.querySelector(".dm-compose [data-act=send-dm]");
+      if (btn) btn.disabled = false;
+    } else {
+      postImg = src;
+      const box = $("#composer-preview");
+      if (box) { box.hidden = false; box.innerHTML = `<img src="${src}" alt=""><button type="button" class="icon-btn" data-act="clear-post-img" aria-label="Remove photo">${I.x}</button>`; }
+      syncComposerPostBtn();
+    }
+  });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.shiftKey) return;
+  if (e.target.id === "dm-text") {
+    e.preventDefault();
+    const btn = e.target.closest(".dm-compose") && e.target.closest(".dm-compose").querySelector("button[data-act=send-dm]");
+    if (btn && !btn.disabled) btn.click();
+    return;
+  }
+  if (e.target.id && e.target.id.indexOf("cmt-") === 0) {
+    e.preventDefault();
+    const btn = e.target.closest(".reply-compose") && e.target.closest(".reply-compose").querySelector("[data-act=send-comment]");
+    if (btn) btn.click();
+  }
+});
+document.addEventListener("submit", (e) => {
+  if (!e.target.classList || !e.target.classList.contains("dm-compose")) return;
+  e.preventDefault();
+  const btn = e.target.querySelector("button[data-act=send-dm]");
+  if (btn && !btn.disabled) btn.click();
+});
 function openModal(inner) { const m = document.createElement("div"); m.className = "modal-bg"; m.id = "modal"; m.innerHTML = `<div class="modal">${inner}</div>`; m.addEventListener("click", (e) => { if (e.target === m) closeModal(); }); document.body.appendChild(m); }
 function closeModal() { const m = $("#modal"); if (m) m.remove(); }
 
