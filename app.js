@@ -29,6 +29,7 @@ const I = {
   home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
   chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><rect x="4.25" y="6.25" width="15.5" height="11.5" rx="2.2"/><path d="M5.2 7.6 12 12.4l6.8-4.8"/></svg>',
   cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>',
   list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>',
   inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-8h14l2 8v6H3z"/><path d="M3 13h5l1.5 3h5L16 13h5"/></svg>',
@@ -205,6 +206,10 @@ const state = {
   wishVisibility: {},
 };
 state.role = "creator";
+state.authed = false;
+try { state.authed = sessionStorage.getItem("bb-in") === "1"; } catch (e) {}
+function signedIn() { return !!state.authed; }
+function signIn() { state.authed = true; try { sessionStorage.setItem("bb-in", "1"); } catch (e) {} }
 state.supporter = { name: "misa", handle: "misaluvr", avatar: IMG.kat, bio: "Sends ring lights to people who make me smile.", anonDefault: true,
   saved: new Set(["w1", "s2", "n3"]),
   sent: [
@@ -374,20 +379,22 @@ function setTheme(t) { document.documentElement.setAttribute("data-theme", t || 
 function currentTheme() { const s = document.documentElement.getAttribute("data-theme"); if (s) return s; return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
 function themeBtn() { return `<button class="theme-btn" data-act="theme" title="Switch theme">${currentTheme() === "dark" ? I.sun : I.moon}</button>`; }
 function msgNavBtn() {
+  if (!signedIn()) return "";
   const n = dmUnreadCount();
-  return `<a class="msg-btn${n ? " has-unread" : ""}" href="#/messages" title="Messages" aria-label="Messages">${I.chat}${n ? `<span class="cnt">${n}</span>` : ""}<span class="msg-btn-label">Messages</span></a>`;
+  return `<a class="msg-btn${n ? " has-unread" : ""}" href="#/messages" title="Messages" aria-label="Messages">${I.mail}${n ? `<span class="cnt">${n}</span>` : ""}</a>`;
 }
 
 /* ---------- Shared chrome ---------- */
 function marketingNav(active) {
   const links = [["explore", "Explore creators"], ["how", "How it works"], ["pricing", "Pricing"], ["safety", "Safety"]];
-  const unread = dmUnreadCount();
+  const inApp = signedIn();
+  const unread = inApp ? dmUnreadCount() : 0;
   return `<div class="navbar"><div class="wrap"><nav class="topnav">
     <a class="brand" href="#/">${I.cat}<span>Baka<span class="bb">Boost</span></span></a>
-    <div class="links">${links.map(([r, l]) => `<a href="#/${r}" class="${active === r ? "active" : ""}">${l}</a>`).join("")}<a href="#/messages" class="${active === "messages" ? "active" : ""}">Messages${unread ? `<span class="nav-unread">${unread}</span>` : ""}</a></div>
-    <div class="actions">${msgNavBtn()}${themeBtn()}<a class="btn btn-text" href="#/login">Log in</a><a class="btn btn-primary" href="#/signup">Join free</a><button class="menu-btn" data-act="menu" aria-label="Menu">${I.menu}</button></div>
+    <div class="links">${links.map(([r, l]) => `<a href="#/${r}" class="${active === r ? "active" : ""}">${l}</a>`).join("")}</div>
+    <div class="actions">${inApp ? msgNavBtn() : ""}${themeBtn()}${inApp ? `<a class="btn btn-text" href="#/feed">Home</a>` : `<a class="btn btn-text" href="#/login">Log in</a><a class="btn btn-primary" href="#/signup">Join free</a>`}<button class="menu-btn" data-act="menu" aria-label="Menu">${I.menu}</button></div>
   </nav></div></div>
-  <div class="drawer" id="drawer"><div class="bg" data-act="menu-close"></div><div class="panel"><button class="close" data-act="menu-close">${I.x}</button>${links.map(([r, l], i) => `<a href="#/${r}" style="animation-delay:${.1 + i * .06}s" data-act="menu-close">${l}</a>`).join("")}<a href="#/messages" style="animation-delay:.38s" data-act="menu-close">${I.chat}<span>Messages</span>${unread ? `<span class="cnt">${unread}</span>` : ""}</a><a href="#/login" style="animation-delay:.4s" data-act="menu-close">Log in</a><a class="btn btn-primary" href="#/signup" style="animation-delay:.46s" data-act="menu-close">Join free</a><button class="btn btn-ghost" data-act="theme" style="justify-content:center;margin-top:4px">${currentTheme() === "dark" ? I.sun : I.moon}<span>Switch theme</span></button></div></div>`;
+  <div class="drawer" id="drawer"><div class="bg" data-act="menu-close"></div><div class="panel"><button class="close" data-act="menu-close">${I.x}</button>${links.map(([r, l], i) => `<a href="#/${r}" style="animation-delay:${.1 + i * .06}s" data-act="menu-close">${l}</a>`).join("")}${inApp ? `<a href="#/messages" style="animation-delay:.38s" data-act="menu-close">${I.mail}<span>Messages</span>${unread ? `<span class="cnt">${unread}</span>` : ""}</a><a href="#/feed" style="animation-delay:.4s" data-act="menu-close">Home</a>` : `<a href="#/login" style="animation-delay:.4s" data-act="menu-close">Log in</a><a class="btn btn-primary" href="#/signup" style="animation-delay:.46s" data-act="menu-close">Join free</a>`}<button class="btn btn-ghost" data-act="theme" style="justify-content:center;margin-top:4px">${currentTheme() === "dark" ? I.sun : I.moon}<span>Switch theme</span></button></div></div>`;
 }
 function footer() {
   return `<div class="wrap"><footer>
@@ -406,9 +413,9 @@ function pro3dScene() {
   return `<div class="pro-3d" aria-hidden="true"><img src="${IMG.heroGirl}" alt=""></div>`;
 }
 function appShell(active, body) {
-  const unread = dmUnreadCount();
-  const creatorNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["messages", "Messages", I.chat, unread], ["dashboard", "Dashboard", I.grid], ["dashboard/page", "My page", I.palette], ["dashboard/wishlist", "My wishlist", I.list], ["dashboard/gifts", "Gifts", I.inbox, state.gifts.filter((g) => !g.thanked).length], ["dashboard/thanks", "Thank-yous", I.heart], ["dashboard/badges", "Badges", I.medal], ["dashboard/settings", "Settings", I.cog]];
-  const supporterNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ["messages", "Messages", I.chat, unread], ["account", "My account", I.user], ["account/gifts", "Gifts I've sent", I.gift, state.supporter.sent.filter((s) => s.step < 2).length], ["account/following", "Following", I.heart], ["account/saved", "Saved wishes", I.bookmark], ["account/library", "Library", I.library], ["account/badges", "Badges", I.medal], ["account/settings", "Settings", I.cog]];
+  const unread = signedIn() ? dmUnreadCount() : 0;
+  const creatorNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ...(signedIn() ? [["messages", "Messages", I.mail, unread]] : []), ["dashboard", "Dashboard", I.grid], ["dashboard/page", "My page", I.palette], ["dashboard/wishlist", "My wishlist", I.list], ["dashboard/gifts", "Gifts", I.inbox, state.gifts.filter((g) => !g.thanked).length], ["dashboard/thanks", "Thank-yous", I.heart], ["dashboard/badges", "Badges", I.medal], ["dashboard/settings", "Settings", I.cog]];
+  const supporterNav = [["feed", "Home", I.home], ["explore", "Explore", I.search], ...(signedIn() ? [["messages", "Messages", I.mail, unread]] : []), ["account", "My account", I.user], ["account/gifts", "Gifts I've sent", I.gift, state.supporter.sent.filter((s) => s.step < 2).length], ["account/following", "Following", I.heart], ["account/saved", "Saved wishes", I.bookmark], ["account/library", "Library", I.library], ["account/badges", "Badges", I.medal], ["account/settings", "Settings", I.cog]];
   const sup = state.role === "supporter"; const nav = sup ? supporterNav : creatorNav;
   const me = sup ? state.supporter : state.user;
   return `<div class="page app">
@@ -817,7 +824,7 @@ function creatorHeader(c, opts = {}) {
         <p class="pro-bio">${esc(c.bio)}</p>
         <div class="pro-links">${(c.links || []).map((l) => `<a href="#/creator/${c.handle}">${I.link}<span>${esc(l)}</span></a>`).join("")}<a href="#/creator/${c.handle}"><span>bakaboost.com/${c.handle}</span></a></div>
       </div>
-      <div class="pro-acts">${opts.preview ? "" : isMe ? `<a class="btn btn-ghost" href="#/messages">${I.chat}<span>Messages</span></a><a class="btn btn-ghost" href="#/dashboard/page">${I.palette}<span>Edit page</span></a>` : `<button class="btn btn-ghost" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button><a class="btn btn-primary" href="#/messages/${c.handle}">${I.chat}<span>Message</span></a><a class="btn btn-ghost" href="#/boost/${c.handle}">${I.cup}<span>Buy a coffee</span></a>`}</div>
+      <div class="pro-acts">${opts.preview ? "" : isMe ? `<a class="btn btn-ghost" href="#/dashboard/page">${I.palette}<span>Edit page</span></a>` : `<button class="btn btn-ghost" data-follow="${c.handle}">${state.following.has(c.handle) ? "Following" : "Follow"}</button>${signedIn() ? `<a class="icon-btn msg-ico" href="#/messages/${c.handle}" aria-label="Message">${I.mail}</a>` : ""}<a class="btn btn-primary" href="#/boost/${c.handle}">${I.cup}<span>Buy a coffee</span></a>`}</div>
     </div>
   </div>`;
 }
@@ -1197,7 +1204,7 @@ function pageMessages(peer) {
         <button class="icon-btn send" data-act="send-dm" data-who="${other.handle}" ${canSend ? "" : "disabled"} aria-label="Send">${I.send}</button>
       </div>
     </form>` : `<div class="dm-blank">
-      <div class="ic">${I.chat}</div>
+      <div class="ic">${I.mail}</div>
       <h2>Select a message</h2>
       <p>Choose from your existing conversations, or start a new one.</p>
       <button class="btn btn-primary" data-act="dm-new">${I.pen}<span>New message</span></button>
@@ -1430,7 +1437,9 @@ function route() {
     case "login": html = pageLogin(); break;
     case "signup": html = pageSignup(); break;
     case "feed": html = pageFeed(); break;
-    case "messages": html = pageMessages(p1 || ""); break;
+    case "messages":
+      if (!signedIn()) { state.nextPath = hash; html = pageLogin(); break; }
+      html = pageMessages(p1 || ""); break;
     case "account": html = p1 === "gifts" ? pageAccountGifts() : p1 === "following" ? pageFollowing() : p1 === "saved" ? pageSaved() : p1 === "settings" ? pageAccountSettings() : p1 === "badges" ? pageBadges("supporter") : p1 === "library" ? pageLibrary() : pageAccount(); break;
     case "dashboard": html = p1 === "badges" ? pageBadges("creator") : p1 === "page" ? pagePageEditor() : p1 === "wishlist" ? pageWishlist() : p1 === "gifts" ? pageGifts() : p1 === "thanks" ? pageThanksInbox() : p1 === "settings" ? pageSettings() : pageDashboard(); break;
     default: html = pageHome();
@@ -1523,7 +1532,7 @@ document.addEventListener("click", (e) => {
   if (d.act === "unlock-nsfw") { state.settings.showNsfw = true; toast("Adult content shown — change this in Settings"); route(); return; }
   if (d.save) { e.preventDefault(); const S = state.supporter.saved; S.has(d.save) ? S.delete(d.save) : S.add(d.save); toast(S.has(d.save) ? "Saved for later" : "Removed from saved"); route(); return; }
   if (d.act === "switch-role") { state.role = state.role === "supporter" ? "creator" : "supporter"; go(state.role === "supporter" ? "account" : "dashboard"); toast("Now viewing as " + (state.role === "supporter" ? "@" + state.supporter.handle : "@" + state.user.handle)); return; }
-  if (d.act === "ob-finish") { state.role = ob.role === "creator" ? "creator" : "supporter"; return; }
+  if (d.act === "ob-finish") { signIn(); state.role = ob.role === "creator" ? "creator" : "supporter"; return; }
   if (d.accent) { readEditor(); myCreator().theme.accent = d.accent; route(); return; }
   if (d.tint) { readEditor(); myCreator().tint = Number(d.tint); route(); return; }
   if (d.act === "add-link") { readEditor(); (myCreator().links = myCreator().links || []).push(""); route(); return; }
@@ -1543,7 +1552,14 @@ document.addEventListener("click", (e) => {
     state.supporter.sent.unshift({ to: handle, kind: co.mode === "contrib" ? "contribution" : "gift", item: w.title, amount: co.mode === "contrib" ? co.amount : w.price, anon: co.anon, msg: co.msg, when: "Just now", step: 0, thanked: false });
     co.item = null; go("sent/" + handle); return;
   }
-  if (d.act === "login") { go(state.role === "supporter" ? "account" : "feed"); toast("Welcome back, " + state.user.name.split(" ")[0]); return; }
+  if (d.act === "login") {
+    signIn();
+    const next = state.nextPath || (state.role === "supporter" ? "account" : "feed");
+    state.nextPath = "";
+    toast("Welcome back, " + state.user.name.split(" ")[0]);
+    if (location.hash.replace(/^#\/?/, "") === next) route(); else go(next);
+    return;
+  }
   if (d.act === "ob-next") { ob.step += 1; route(); return; }
   if (d.act === "ob-skip") { ob.step = 3; route(); return; }
   if (d.role) { ob.role = d.role; route(); return; }
